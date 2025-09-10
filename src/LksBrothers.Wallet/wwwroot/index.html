@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LKS Wallet</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+        }
+
+        .wallet-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ffffff, #cccccc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #888;
+            margin-bottom: 40px;
+        }
+
+        .login-screen {
+            display: block;
+        }
+
+        .wallet-screen {
+            display: none;
+        }
+
+        .google-btn {
+            background: white;
+            color: #333;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        .google-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
+        }
+
+        .balance {
+            font-size: 36px;
+            font-weight: 700;
+            margin: 30px 0;
+        }
+
+        .address {
+            font-size: 12px;
+            color: #888;
+            word-break: break-all;
+            margin-bottom: 30px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn.primary {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            border: none;
+        }
+
+        .transactions {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .tx-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tx-item:last-child {
+            border-bottom: none;
+        }
+
+        .tx-info {
+            flex: 1;
+        }
+
+        .tx-type {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .tx-time {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .tx-amount {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .tx-amount.received {
+            color: #4CAF50;
+        }
+
+        .tx-amount.sent {
+            color: #f44336;
+        }
+
+        .send-form {
+            display: none;
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+        }
+
+        .form-group input::placeholder {
+            color: #888;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="wallet-card">
+            <!-- Login Screen -->
+            <div class="login-screen" id="loginScreen">
+                <div class="logo">LKS</div>
+                <div class="subtitle">Ultra-simple wallet</div>
+                <div id="g_id_onload"
+                     data-client_id="YOUR_GOOGLE_CLIENT_ID"
+                     data-context="signin"
+                     data-ux_mode="popup"
+                     data-callback="handleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                <button class="google-btn" onclick="signInWithGoogle()">
+                    Continue with Google
+                </button>
+                <div style="font-size: 12px; color: #666; margin-top: 20px;">
+                    No seed phrases. No private keys.<br>
+                    Just sign in and start using LKS.
+                </div>
+            </div>
+
+            <!-- Wallet Screen -->
+            <div class="wallet-screen" id="walletScreen">
+                <div class="balance" id="balance">0.00 LKS</div>
+                <div class="address" id="address">Loading...</div>
+                
+                <div class="actions">
+                    <button class="btn" onclick="showReceive()">Receive</button>
+                    <button class="btn primary" onclick="showSend()">Send</button>
+                </div>
+
+                <!-- Send Form -->
+                <div class="send-form" id="sendForm">
+                    <div class="form-group">
+                        <label>To Address</label>
+                        <input type="text" id="toAddress" placeholder="0x..." />
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (LKS)</label>
+                        <input type="number" id="amount" placeholder="0.00" step="0.01" />
+                    </div>
+                    <div class="actions">
+                        <button class="btn" onclick="cancelSend()">Cancel</button>
+                        <button class="btn primary" onclick="sendLKS()">Send</button>
+                    </div>
+                </div>
+
+                <!-- Transactions -->
+                <div class="transactions">
+                    <h3 style="margin-bottom: 15px; font-size: 16px;">Recent</h3>
+                    <div id="transactionsList">
+                        <div style="text-align: center; color: #888; padding: 20px;">
+                            No transactions yet
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn" onclick="logout()" style="width: auto; padding: 10px 20px;">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let authToken = null;
+
+        // Simple Google Sign-In
+        function signInWithGoogle() {
+            // Simulate Google OAuth (in real implementation, use Google Identity Services)
+            const email = prompt("Enter your email (demo mode):");
+            const name = prompt("Enter your name (demo mode):");
+            
+            if (email && name) {
+                handleLogin(email, name);
+            }
+        }
+
+        async function handleLogin(email, name) {
+            try {
+                const response = await fetch('/api/wallet/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        googleToken: 'demo-token',
+                        email: email,
+                        name: name
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.token) {
+                    authToken = data.token;
+                    currentUser = data.user;
+                    showWallet();
+                    loadWalletData();
+                } else {
+                    alert('Login failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Login failed: ' + error.message);
+            }
+        }
+
+        function showWallet() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('walletScreen').style.display = 'block';
+        }
+
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = 'block';
+            document.getElementById('walletScreen').style.display = 'none';
+        }
+
+        async function loadWalletData() {
+            try {
+                const response = await fetch('/api/wallet/info', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const data = await response.json();
+                
+                document.getElementById('balance').textContent = data.balanceFormatted || '0.00 LKS';
+                document.getElementById('address').textContent = data.address || 'Loading...';
+                
+                loadTransactions();
+            } catch (error) {
+                console.error('Failed to load wallet data:', error);
+            }
+        }
+
+        async function loadTransactions() {
+            try {
+                const response = await fetch('/api/wallet/transactions', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const transactions = await response.json();
+                const list = document.getElementById('transactionsList');
+                
+                if (transactions.length === 0) {
+                    list.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">No transactions yet</div>';
+                    return;
+                }
+
+                list.innerHTML = transactions.map(tx => `
+                    <div class="tx-item">
+                        <div class="tx-info">
+                            <div class="tx-type">${tx.type}</div>
+                            <div class="tx-time">${tx.timeAgo}</div>
+                        </div>
+                        <div class="tx-amount ${tx.type.toLowerCase()}">${tx.amountFormatted}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load transactions:', error);
+            }
+        }
+
+        function showSend() {
+            document.getElementById('sendForm').style.display = 'block';
+        }
+
+        function cancelSend() {
+            document.getElementById('sendForm').style.display = 'none';
+            document.getElementById('toAddress').value = '';
+            document.getElementById('amount').value = '';
+        }
+
+        async function sendLKS() {
+            const to = document.getElementById('toAddress').value;
+            const amount = document.getElementById('amount').value;
+
+            if (!to || !amount) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/wallet/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        to: to,
+                        amount: (parseFloat(amount) * 1e18).toString() // Convert to wei
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Transaction sent successfully!');
+                    cancelSend();
+                    loadWalletData();
+                } else {
+                    alert('Send failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Send failed: ' + error.message);
+            }
+        }
+
+        function showReceive() {
+            const address = document.getElementById('address').textContent;
+            alert(`Your LKS address:\n\n${address}\n\nShare this address to receive LKS coins.`);
+        }
+
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            showLogin();
+        }
+
+        // Auto-refresh wallet data every 30 seconds
+        setInterval(() => {
+            if (authToken) {
+                loadWalletData();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
