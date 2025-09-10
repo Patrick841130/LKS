@@ -1,31 +1,51 @@
-# Node.js Payment Backend Dockerfile
-FROM node:18-alpine
+# LKS Network Node Dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 8080
+EXPOSE 8545
 
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy project files
+COPY ["LksBrothers.Node/LksBrothers.Node.csproj", "LksBrothers.Node/"]
+COPY ["LksBrothers.Core/LksBrothers.Core.csproj", "LksBrothers.Core/"]
+COPY ["LksBrothers.Consensus/LksBrothers.Consensus.csproj", "LksBrothers.Consensus/"]
+COPY ["LksBrothers.StateManagement/LksBrothers.StateManagement.csproj", "LksBrothers.StateManagement/"]
+COPY ["LksBrothers.Compliance/LksBrothers.Compliance.csproj", "LksBrothers.Compliance/"]
+COPY ["LksBrothers.Rpc/LksBrothers.Rpc.csproj", "LksBrothers.Rpc/"]
+COPY ["LksBrothers.Infrastructure/LksBrothers.Infrastructure.csproj", "LksBrothers.Infrastructure/"]
+COPY ["LksBrothers.Monitoring/LksBrothers.Monitoring.csproj", "LksBrothers.Monitoring/"]
+
+# Restore dependencies
+RUN dotnet restore "LksBrothers.Node/LksBrothers.Node.csproj"
+
+# Copy source code
+COPY . .
+
+# Build application
+WORKDIR "/src/LksBrothers.Node"
+RUN dotnet build "LksBrothers.Node.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "LksBrothers.Node.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Create data directory
+RUN mkdir -p /app/data
 
-# Install dependencies
-RUN npm ci --only=production
-
-# Copy application code
-COPY backend-server.js ./
+# Copy published application
+COPY --from=publish /app/publish .
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
-
-# Change ownership
-RUN chown -R nodejs:nodejs /app
-USER nodejs
-
-# Expose port
-EXPOSE 3000
+RUN groupadd -r lksuser && useradd -r -g lksuser lksuser
+RUN chown -R lksuser:lksuser /app
+USER lksuser
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
 
-# Start the application
-CMD ["node", "backend-server.js"]
+ENTRYPOINT ["dotnet", "LksBrothers.Node.dll"]

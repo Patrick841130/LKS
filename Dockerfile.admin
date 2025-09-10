@@ -1,0 +1,51 @@
+# LKS Network Admin Dashboard Dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 5001
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy project files
+COPY ["LksBrothers.Admin/LksBrothers.Admin.csproj", "LksBrothers.Admin/"]
+COPY ["LksBrothers.Infrastructure/LksBrothers.Infrastructure.csproj", "LksBrothers.Infrastructure/"]
+COPY ["LksBrothers.Monitoring/LksBrothers.Monitoring.csproj", "LksBrothers.Monitoring/"]
+COPY ["LksBrothers.Core/LksBrothers.Core.csproj", "LksBrothers.Core/"]
+
+# Restore dependencies
+RUN dotnet restore "LksBrothers.Admin/LksBrothers.Admin.csproj"
+
+# Copy source code
+COPY . .
+
+# Build application
+WORKDIR "/src/LksBrothers.Admin"
+RUN dotnet build "LksBrothers.Admin.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "LksBrothers.Admin.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+
+# Install Docker CLI for container management
+USER root
+RUN apt-get update && apt-get install -y \
+    curl \
+    docker.io \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy published application
+COPY --from=publish /app/publish .
+
+# Create non-root user
+RUN groupadd -r lksuser && useradd -r -g lksuser lksuser
+RUN usermod -aG docker lksuser
+RUN chown -R lksuser:lksuser /app
+USER lksuser
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:5001/health || exit 1
+
+ENTRYPOINT ["dotnet", "LksBrothers.Admin.dll"]
