@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LKS Wallet - Simple & Secure</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .wallet-card {
+            transition: all 0.3s ease;
+        }
+        .wallet-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        .qr-code {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white">
+    <!-- Header -->
+    <header class="glass-effect">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <img src="assets/LKS NETWORK LOGO.svg" alt="LKS Wallet" class="h-10 w-auto">
+                    <span class="text-2xl font-bold">LKS Wallet</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="glass-effect p-2 rounded-lg hover:bg-white/20 transition">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button onclick="showSettings()" class="glass-effect p-2 rounded-lg hover:bg-white/20 transition">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Wallet Overview -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold mb-4">Your LKS Wallet</h1>
+            <p class="text-gray-300">Simple, secure, and zero-fee transactions</p>
+        </div>
+
+        <!-- Balance Card -->
+        <div class="max-w-md mx-auto mb-8">
+            <div class="glass-effect rounded-2xl p-8 text-center wallet-card">
+                <div class="mb-4">
+                    <img src="assets/LKS COIN.svg" alt="LKS COIN" class="w-16 h-16 mx-auto mb-4">
+                    <h2 class="text-2xl font-bold text-gray-300">Total Balance</h2>
+                </div>
+                <div class="text-5xl font-bold text-green-400 mb-2" id="wallet-balance">5,000.00</div>
+                <div class="text-xl text-gray-400">LKS COIN</div>
+                <div class="text-sm text-green-300 mt-2">≈ $12,500.00 USD</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <button onclick="showSend()" class="glass-effect rounded-xl p-6 text-center wallet-card hover:bg-white/20 transition">
+                <i class="fas fa-paper-plane text-3xl text-blue-400 mb-3"></i>
+                <div class="font-semibold">Send</div>
+            </button>
+            <button onclick="showReceive()" class="glass-effect rounded-xl p-6 text-center wallet-card hover:bg-white/20 transition">
+                <i class="fas fa-qrcode text-3xl text-green-400 mb-3"></i>
+                <div class="font-semibold">Receive</div>
+            </button>
+            <button onclick="showSwap()" class="glass-effect rounded-xl p-6 text-center wallet-card hover:bg-white/20 transition">
+                <i class="fas fa-exchange-alt text-3xl text-purple-400 mb-3"></i>
+                <div class="font-semibold">Swap</div>
+            </button>
+            <button onclick="showHistory()" class="glass-effect rounded-xl p-6 text-center wallet-card hover:bg-white/20 transition">
+                <i class="fas fa-history text-3xl text-yellow-400 mb-3"></i>
+                <div class="font-semibold">History</div>
+            </button>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="glass-effect rounded-2xl p-6 mb-8">
+            <h3 class="text-xl font-bold mb-4 flex items-center">
+                <i class="fas fa-clock mr-2 text-blue-400"></i>
+                Recent Transactions
+            </h3>
+            <div class="space-y-3" id="transaction-list">
+                <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-arrow-down text-white"></i>
+                        </div>
+                        <div>
+                            <div class="font-semibold">Received LKS</div>
+                            <div class="text-sm text-gray-400">From: lks1x2y3z...</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-green-400 font-bold">+500.00 LKS</div>
+                        <div class="text-xs text-gray-400">2 min ago</div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-arrow-up text-white"></i>
+                        </div>
+                        <div>
+                            <div class="font-semibold">Sent LKS</div>
+                            <div class="text-sm text-gray-400">To: lks9a8b7c...</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-red-400 font-bold">-100.00 LKS</div>
+                        <div class="text-xs text-gray-400">1 hour ago</div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-gamepad text-white"></i>
+                        </div>
+                        <div>
+                            <div class="font-semibold">Stadium Tackle</div>
+                            <div class="text-sm text-gray-400">Game purchase</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-red-400 font-bold">-50.00 LKS</div>
+                        <div class="text-xs text-gray-400">3 hours ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LKS Services -->
+        <div class="glass-effect rounded-2xl p-6">
+            <h3 class="text-xl font-bold mb-4 flex items-center">
+                <i class="fas fa-apps mr-2 text-purple-400"></i>
+                LKS Services
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <button onclick="openService('ip-patent')" class="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition text-center">
+                    <i class="fas fa-file-contract text-2xl text-yellow-400 mb-2"></i>
+                    <div class="font-semibold">IP Patent</div>
+                </button>
+                <button onclick="openService('lks-summit')" class="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition text-center">
+                    <i class="fas fa-calendar-alt text-2xl text-blue-400 mb-2"></i>
+                    <div class="font-semibold">LKS Summit</div>
+                </button>
+                <button onclick="openService('software-factory')" class="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition text-center">
+                    <i class="fas fa-code text-2xl text-green-400 mb-2"></i>
+                    <div class="font-semibold">Software Factory</div>
+                </button>
+                <button onclick="openService('vara-security')" class="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition text-center">
+                    <i class="fas fa-shield-alt text-2xl text-red-400 mb-2"></i>
+                    <div class="font-semibold">Vara Security</div>
+                </button>
+                <button onclick="openService('stadium-tackle')" class="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition text-center">
+                    <i class="fas fa-gamepad text-2xl text-purple-400 mb-2"></i>
+                    <div class="font-semibold">Stadium Tackle</div>
+                </button>
+                <button onclick="openService('lks-capital')" class="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition text-center">
+                    <i class="fas fa-chart-line text-2xl text-orange-400 mb-2"></i>
+                    <div class="font-semibold">LKS Capital</div>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Send Modal -->
+    <div id="send-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="glass-effect rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold">Send LKS</h3>
+                <button onclick="closeSend()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form onsubmit="sendTransaction(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold mb-2">Recipient Address</label>
+                    <input type="text" id="recipient-address" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-400" placeholder="lks1x2y3z4a5b6c7d8e9f...">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold mb-2">Amount</label>
+                    <div class="relative">
+                        <input type="number" id="send-amount" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 pr-16 text-white placeholder-gray-400" placeholder="0.00">
+                        <span class="absolute right-4 top-3 text-gray-400">LKS</span>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold mb-2">Note (Optional)</label>
+                    <input type="text" id="transaction-note" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-400" placeholder="Payment for...">
+                </div>
+                <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition">
+                    <i class="fas fa-paper-plane mr-2"></i>
+                    Send LKS (Zero Fees)
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Receive Modal -->
+    <div id="receive-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="glass-effect rounded-2xl p-8 max-w-md w-full mx-4 text-center">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold">Receive LKS</h3>
+                <button onclick="closeReceive()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="qr-code mb-6">
+                <div class="w-48 h-48 bg-gray-200 flex items-center justify-center text-gray-600 text-sm">
+                    QR Code
+                    <br>
+                    lks1abc123...
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-2">Your LKS Address</label>
+                <div class="bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white font-mono text-sm break-all">
+                    lks1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz
+                </div>
+            </div>
+            <button onclick="copyAddress()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition">
+                <i class="fas fa-copy mr-2"></i>
+                Copy Address
+            </button>
+        </div>
+    </div>
+
+    <!-- Connect to Parent Window -->
+    <script>
+        // LKS Wallet API for external connections
+        window.lksWallet = {
+            isConnected: false,
+            address: 'lks1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz',
+            balance: 5000,
+            
+            connect: async function() {
+                this.isConnected = true;
+                
+                // Notify parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'LKS_WALLET_CONNECTED',
+                        address: this.address,
+                        balance: this.balance,
+                        network: 'LKS Network'
+                    }, '*');
+                }
+                
+                return {
+                    address: this.address,
+                    balance: this.balance,
+                    network: 'LKS Network'
+                };
+            },
+            
+            signTransaction: async function(transaction) {
+                if (!this.isConnected) {
+                    throw new Error('Wallet not connected');
+                }
+                
+                return {
+                    signature: 'lks_sig_' + Math.random().toString(36).substr(2, 9),
+                    transaction: transaction
+                };
+            },
+            
+            getBalance: async function() {
+                return this.balance;
+            },
+            
+            disconnect: function() {
+                this.isConnected = false;
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'LKS_WALLET_DISCONNECTED'
+                    }, '*');
+                }
+            }
+        };
+
+        // Auto-connect when wallet opens
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                window.lksWallet.connect();
+                showToast('LKS Wallet activated and ready!', 'success');
+            }, 500);
+        });
+
+        // Wallet functions
+        function showSend() {
+            document.getElementById('send-modal').classList.remove('hidden');
+            document.getElementById('send-modal').classList.add('flex');
+        }
+
+        function closeSend() {
+            document.getElementById('send-modal').classList.add('hidden');
+            document.getElementById('send-modal').classList.remove('flex');
+        }
+
+        function showReceive() {
+            document.getElementById('receive-modal').classList.remove('hidden');
+            document.getElementById('receive-modal').classList.add('flex');
+        }
+
+        function closeReceive() {
+            document.getElementById('receive-modal').classList.add('hidden');
+            document.getElementById('receive-modal').classList.remove('flex');
+        }
+
+        function sendTransaction(event) {
+            event.preventDefault();
+            const recipient = document.getElementById('recipient-address').value;
+            const amount = document.getElementById('send-amount').value;
+            const note = document.getElementById('transaction-note').value;
+
+            if (!recipient || !amount) {
+                alert('Please fill in recipient address and amount');
+                return;
+            }
+
+            // Simulate transaction
+            showToast('Transaction sent successfully! Zero fees applied.', 'success');
+            closeSend();
+            
+            // Update balance
+            const currentBalance = parseFloat(document.getElementById('wallet-balance').textContent.replace(',', ''));
+            const newBalance = currentBalance - parseFloat(amount);
+            document.getElementById('wallet-balance').textContent = newBalance.toLocaleString('en-US', {minimumFractionDigits: 2});
+        }
+
+        function copyAddress() {
+            const address = 'lks1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz';
+            navigator.clipboard.writeText(address);
+            showToast('Address copied to clipboard!', 'success');
+        }
+
+        function openService(service) {
+            showToast(`Opening ${service.replace('-', ' ').toUpperCase()}...`, 'info');
+        }
+
+        function showSwap() {
+            showToast('Swap feature coming soon!', 'info');
+        }
+
+        function showHistory() {
+            showToast('Full transaction history coming soon!', 'info');
+        }
+
+        function showSettings() {
+            showToast('Settings panel coming soon!', 'info');
+        }
+
+        function toggleTheme() {
+            showToast('Theme toggle coming soon!', 'info');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            } text-white`;
+            
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'} mr-2"></i>
+                    ${message}
+                </div>
+            `;
+
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // Notify parent window that LKS Wallet is ready
+        if (window.opener) {
+            window.opener.postMessage({
+                type: 'LKS_WALLET_READY',
+                wallet: window.lksWallet
+            }, '*');
+        }
+    </script>
+</body>
+</html>

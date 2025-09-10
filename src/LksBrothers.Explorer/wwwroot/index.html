@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LKS Explorer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.10.0/dist/index.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nethereum-web3@1.0.0/dist/nethereum-web3.min.js"></script>
+    <link rel="stylesheet" href="css/wallet.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 20px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 900;
+            background: linear-gradient(45deg, #ffffff, #cccccc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-input {
+            padding: 12px 20px;
+            border: 1px solid #333;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 14px;
+            width: 400px;
+        }
+
+        .search-input::placeholder {
+            color: #888;
+        }
+
+        .search-btn {
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #4CAF50;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .section {
+            margin: 40px 0;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #333;
+        }
+
+        .data-table {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .table-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        .table-row {
+            padding: 15px 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .table-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        .hash {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #4CAF50;
+        }
+
+        .amount {
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        .status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status.confirmed {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+        }
+
+        .status.pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #FFC107;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        .error {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            color: #f44336;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .network-health {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .health-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .tabs {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #4CAF50;
+            border-bottom-color: #4CAF50;
+        }
+
+        .tab:hover {
+            color: #ffffff;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .search-input {
+                width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-header,
+            .table-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">LKS Explorer</div>
+                <div class="search-box">
+                    <input type="text" class="search-input" id="searchInput" 
+                           placeholder="Search blocks, transactions, addresses...">
+                    <button class="search-btn" onclick="performSearch()">Search</button>
+                </div>
+                <div class="network-health">
+                    <div class="health-indicator"></div>
+                    <span>Network Healthy</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Stats Section -->
+        <div class="section">
+            <div class="stats-grid" id="statsGrid">
+                <div class="loading">Loading network statistics...</div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="section">
+            <div class="section-title">Network Performance</div>
+            <div class="tabs">
+                <button class="tab active" onclick="showChart('tps')">TPS</button>
+                <button class="tab" onclick="showChart('blocktime')">Block Time</button>
+                <button class="tab" onclick="showChart('volume')">Volume</button>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title" id="chartTitle">Transactions Per Second (24h)</div>
+                <canvas id="performanceChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Latest Blocks -->
+        <div class="section">
+            <div class="section-title">Latest Blocks</div>
+            <div class="data-table">
+                <div class="nav-links">
+                    <a href="#" class="nav-link">Blocks</a>
+                    <a href="#" class="nav-link">Transactions</a>
+                    <a href="#" class="nav-link">Validators</a>
+                    <a href="/tokenomics.html" class="nav-link">Tokenomics</a>
+                    <a href="#" class="nav-link">Stats</a>
+                </div>
+                <div class="table-header">
+                    <div>Block</div>
+                    <div>Transactions</div>
+                    <div>Proposer</div>
+                    <div>Time</div>
+                </div>
+                <div id="blocksTable">
+                    <div class="loading">Loading latest blocks...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Latest Transactions -->
+        <div class="section">
+            <div class="section-title">Latest Transactions</div>
+            <div class="data-table">
+                <div class="table-header">
+                    <div>Hash</div>
+                    <div>From → To</div>
+                    <div>Amount</div>
+                    <div>Status</div>
+                </div>
+                <div id="transactionsTable">
+                    <div class="loading">Loading latest transactions...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentChart = null;
+        let currentChartType = 'tps';
+
+        // Load initial data
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadLatestBlocks();
+            loadLatestTransactions();
+            loadChart('tps');
+            
+            // Auto-refresh every 30 seconds
+            setInterval(() => {
+                loadStats();
+                loadLatestBlocks();
+                loadLatestTransactions();
+            }, 30000);
+        });
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/explorer/stats');
+                const stats = await response.json();
+                
+                const statsGrid = document.getElementById('statsGrid');
+                statsGrid.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.totalBlocks.toLocaleString()}</div>
+                        <div class="stat-label">Total Blocks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.totalTransactions.toLocaleString()}</div>
+                        <div class="stat-label">Total Transactions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.currentTPSFormatted}</div>
+                        <div class="stat-label">Current TPS</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.averageBlockTimeFormatted}</div>
+                        <div class="stat-label">Avg Block Time</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.activeValidators.toLocaleString()}</div>
+                        <div class="stat-label">Active Validators</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.circulatingSupplyFormatted}</div>
+                        <div class="stat-label">Circulating Supply</div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('statsGrid').innerHTML = 
+                    '<div class="error">Failed to load network statistics</div>';
+            }
+        }
+
+        async function loadLatestBlocks() {
+            try {
+                const response = await fetch('/api/explorer/blocks/latest?count=10');
+                const blocks = await response.json();
+                
+                const blocksTable = document.getElementById('blocksTable');
+                blocksTable.innerHTML = blocks.map(block => `
+                    <div class="table-row" onclick="viewBlock('${block.hash}')">
+                        <div>
+                            <div class="hash">#${block.number}</div>
+                            <div style="font-size: 10px; color: #666;">${block.hash.substring(0, 16)}...</div>
+                        </div>
+                        <div>${block.transactionCount}</div>
+                        <div class="hash">${block.proposerAddress ? block.proposerAddress.substring(0, 16) + '...' : 'N/A'}</div>
+                        <div>${block.timeAgo}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading blocks:', error);
+                document.getElementById('blocksTable').innerHTML = 
+                    '<div class="error">Failed to load latest blocks</div>';
+            }
+        }
+
+        async function loadLatestTransactions() {
+            try {
+                const response = await fetch('/api/explorer/transactions/latest?count=15');
+                const transactions = await response.json();
+                
+                const transactionsTable = document.getElementById('transactionsTable');
+                transactionsTable.innerHTML = transactions.map(tx => `
+                    <div class="table-row" onclick="viewTransaction('${tx.hash}')">
+                        <div class="hash">${tx.hash.substring(0, 16)}...</div>
+                        <div>
+                            <div class="hash">${tx.from.substring(0, 8)}...</div>
+                            <div style="font-size: 12px; color: #888;">→ ${tx.to ? tx.to.substring(0, 8) + '...' : 'Contract'}</div>
+                        </div>
+                        <div class="amount">${tx.amountFormatted}</div>
+                        <div>
+                            <span class="status ${tx.status.toLowerCase()}">${tx.status}</span>
+                            <div style="font-size: 10px; color: #666;">${tx.timeAgo}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                document.getElementById('transactionsTable').innerHTML = 
+                    '<div class="error">Failed to load latest transactions</div>';
+            }
+        }
+
+        async function loadChart(type) {
+            try {
+                let endpoint, title;
+                switch(type) {
+                    case 'tps':
+                        endpoint = '/api/explorer/charts/tps';
+                        title = 'Transactions Per Second (24h)';
+                        break;
+                    case 'blocktime':
+                        endpoint = '/api/explorer/charts/block-time';
+                        title = 'Average Block Time (24h)';
+                        break;
+                    case 'volume':
+                        endpoint = '/api/explorer/charts/volume';
+                        title = 'Transaction Volume (7d)';
+                        break;
+                }
+
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                
+                document.getElementById('chartTitle').textContent = title;
+                
+                if (currentChart) {
+                    currentChart.destroy();
+                }
+
+                const ctx = document.getElementById('performanceChart').getContext('2d');
+                currentChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => d.label),
+                        datasets: [{
+                            label: title,
+                            data: data.map(d => d.value),
+                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#888'
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#888'
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading chart:', error);
+            }
+        }
+
+        function showChart(type) {
+            currentChartType = type;
+            
+            // Update tab states
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            loadChart(type);
+        }
+
+        async function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+
+            try {
+                const response = await fetch(`/api/explorer/search?q=${encodeURIComponent(query)}`);
+                const result = await response.json();
+                
+                switch(result.type) {
+                    case 'block':
+                        viewBlock(result.data.hash);
+                        break;
+                    case 'transaction':
+                        viewTransaction(result.data.hash);
+                        break;
+                    case 'address':
+                        viewAddress(result.data.address);
+                        break;
+                    case 'not_found':
+                        alert('No results found for: ' + query);
+                        break;
+                    case 'error':
+                        alert('Search error: ' + result.data);
+                        break;
+                }
+            } catch (error) {
+                alert('Search failed: ' + error.message);
+            }
+        }
+
+        function viewBlock(hash) {
+            window.open(`/block/${hash}`, '_blank');
+        }
+
+        function viewTransaction(hash) {
+            window.open(`/tx/${hash}`, '_blank');
+        }
+
+        function viewAddress(address) {
+            window.open(`/address/${address}`, '_blank');
+        }
+
+        // Handle Enter key in search
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+    </script>
+    
+    <!-- Wallet Integration Scripts -->
+    <script src="js/wallet-service.js"></script>
+    <script src="js/wallet-ui.js"></script>
+</body>
+</html>

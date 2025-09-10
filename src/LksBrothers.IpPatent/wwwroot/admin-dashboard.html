@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP PATENT Admin Dashboard - LKS BROTHERS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .status-pending { background-color: #fef3c7; color: #92400e; border-color: #fde68a; }
+        .status-approved { background-color: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+        .status-rejected { background-color: #fee2e2; color: #991b1b; border-color: #fecaca; }
+        .status-uploading { background-color: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+        .status-published { background-color: #e9d5ff; color: #6b21a8; border-color: #c4b5fd; }
+        .progress-bar { transition: width 0.3s ease-in-out; }
+        .pulse-dot { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .real-time-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50" x-data="adminDashboard()">
+    <!-- Header -->
+    <header class="gradient-bg shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-3xl font-bold text-white">LKS BROTHERS</h1>
+                        <p class="text-blue-100 text-sm">IP PATENT Authority Dashboard</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- Real-time Connection Status -->
+                    <div class="flex items-center text-white">
+                        <span class="real-time-indicator" :class="connectionStatus === 'connected' ? 'bg-green-400' : 'bg-red-400'"></span>
+                        <span class="text-xs" x-text="connectionStatus === 'connected' ? 'Live' : 'Disconnected'"></span>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <div class="relative">
+                        <button @click="showNotifications = !showNotifications" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-lg transition-all relative">
+                            <i class="fas fa-bell"></i>
+                            <span x-show="unreadNotifications > 0" class="notification-badge" x-text="unreadNotifications"></span>
+                        </button>
+                        
+                        <!-- Notifications Dropdown -->
+                        <div x-show="showNotifications" x-cloak @click.away="showNotifications = false" 
+                             class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
+                            <div class="p-4 border-b border-gray-200">
+                                <h3 class="font-semibold text-gray-900">Real-time Notifications</h3>
+                            </div>
+                            <div class="max-h-64 overflow-y-auto">
+                                <template x-for="notification in notifications" :key="notification.id">
+                                    <div class="p-3 border-b border-gray-100 hover:bg-gray-50" :class="!notification.read ? 'bg-blue-50' : ''">
+                                        <div class="flex items-start">
+                                            <div class="flex-shrink-0">
+                                                <i :class="notification.icon" class="text-sm mt-1" :class="getNotificationColor(notification.type)"></i>
+                                            </div>
+                                            <div class="ml-3 flex-1">
+                                                <p class="text-sm text-gray-900" x-text="notification.message"></p>
+                                                <p class="text-xs text-gray-500" x-text="formatTime(notification.timestamp)"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div x-show="notifications.length === 0" class="p-4 text-center text-gray-500">
+                                    No new notifications
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-white text-right">
+                        <p class="text-sm">Welcome back, Admin</p>
+                        <p class="text-xs text-blue-100" x-text="currentTime"></p>
+                    </div>
+                    <button class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all">
+                        <i class="fas fa-user-circle mr-2"></i>Profile
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6 card-shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                        <i class="fas fa-clock text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Pending Reviews</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.pendingReviews">12</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 card-shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Approved This Week</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.approvedThisWeek">28</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 card-shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="fas fa-network-wired text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Published on Mainnets</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.publishedOnMainnets">156</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 card-shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 text-red-600">
+                        <i class="fas fa-exclamation-triangle text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Overdue Reviews</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.overdueReviews">3</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Submissions Queue -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-lg card-shadow">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-xl font-bold text-gray-900">Review Queue</h2>
+                            <div class="flex space-x-2">
+                                <select class="border border-gray-300 rounded-lg px-3 py-1 text-sm" x-model="filterType">
+                                    <option value="all">All Types</option>
+                                    <option value="Patent">Patents</option>
+                                    <option value="Trademark">Trademarks</option>
+                                    <option value="Copyright">Copyrights</option>
+                                </select>
+                                <button @click="refreshSubmissions()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-lg text-sm transition-colors">
+                                    <i class="fas fa-sync-alt mr-1"></i>Refresh
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-4" x-show="filteredSubmissions.length > 0">
+                            <template x-for="submission in filteredSubmissions" :key="submission.id">
+                                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1">
+                                            <div class="flex items-center space-x-3 mb-2">
+                                                <span class="px-2 py-1 text-xs font-medium rounded-full border" 
+                                                      :class="getStatusClass(submission.status)" 
+                                                      x-text="submission.status"></span>
+                                                <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full" 
+                                                      x-text="submission.type"></span>
+                                                <span class="text-xs text-gray-500" x-text="formatDate(submission.submissionDate)"></span>
+                                                <span x-show="submission.isUploading" class="pulse-dot w-2 h-2 bg-blue-500 rounded-full"></span>
+                                            </div>
+                                            <h3 class="font-semibold text-gray-900 mb-1" x-text="submission.title"></h3>
+                                            <p class="text-sm text-gray-600 mb-2" x-text="submission.description"></p>
+                                            
+                                            <!-- Progress Bar for Multi-mainnet Upload -->
+                                            <div x-show="submission.uploadProgress !== undefined" class="mb-2">
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-xs text-gray-600">Mainnet Upload Progress</span>
+                                                    <span class="text-xs text-gray-600" x-text="submission.uploadProgress + '%'"></span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                                    <div class="progress-bar bg-blue-600 h-2 rounded-full" 
+                                                         :style="'width: ' + submission.uploadProgress + '%'"></div>
+                                                </div>
+                                                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                                    <span x-text="(submission.successfulUploads || 0) + ' of ' + (submission.totalMainnets || 10) + ' mainnets'"></span>
+                                                    <span x-show="submission.failedUploads > 0" class="text-red-600" 
+                                                          x-text="submission.failedUploads + ' failed'"></span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex items-center text-xs text-gray-500">
+                                                <i class="fas fa-user mr-1"></i>
+                                                <span x-text="submission.userId"></span>
+                                                <span class="mx-2">•</span>
+                                                <i class="fas fa-calendar mr-1"></i>
+                                                <span>Due: <span x-text="formatDate(submission.reviewDeadline)"></span></span>
+                                                <span x-show="submission.lastUpdated" class="mx-2">•</span>
+                                                <span x-show="submission.lastUpdated" class="text-green-600">
+                                                    <i class="fas fa-sync-alt mr-1"></i>
+                                                    <span x-text="'Updated ' + formatTime(submission.lastUpdated)"></span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2 ml-4">
+                                            <button @click="approveSubmission(submission.id)" 
+                                                    class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                                <i class="fas fa-check mr-1"></i>Approve
+                                            </button>
+                                            <button @click="rejectSubmission(submission.id)" 
+                                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                                <i class="fas fa-times mr-1"></i>Reject
+                                            </button>
+                                            <button @click="viewDetails(submission.id)" 
+                                                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                                <i class="fas fa-eye mr-1"></i>View
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <div x-show="filteredSubmissions.length === 0" class="text-center py-8 text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-4"></i>
+                            <p>No submissions in queue</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Mainnet Status -->
+                <div class="bg-white rounded-xl shadow-lg card-shadow">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Mainnet Status</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-3">
+                            <template x-for="mainnet in mainnets" :key="mainnet.id">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full mr-3" 
+                                             :class="mainnet.status === 'Active' ? 'bg-green-500' : 'bg-red-500'"></div>
+                                        <span class="text-sm font-medium text-gray-700" x-text="mainnet.name"></span>
+                                    </div>
+                                    <span class="text-xs px-2 py-1 rounded-full" 
+                                          :class="mainnet.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                                          x-text="mainnet.status"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="bg-white rounded-xl shadow-lg card-shadow">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <template x-for="activity in recentActivity" :key="activity.id">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium"
+                                             :class="getActivityIcon(activity.type)">
+                                            <i :class="activity.icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm text-gray-900" x-text="activity.message"></p>
+                                        <p class="text-xs text-gray-500" x-text="formatDate(activity.timestamp)"></p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-xl shadow-lg card-shadow">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Quick Actions</h3>
+                    </div>
+                    <div class="p-6 space-y-3">
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors">
+                            <i class="fas fa-download mr-2"></i>Export Reports
+                        </button>
+                        <button class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>Sync Mainnets
+                        </button>
+                        <button class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition-colors">
+                            <i class="fas fa-chart-bar mr-2"></i>View Analytics
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Submission Details -->
+    <div x-show="showModal" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900">Submission Details</h3>
+                <button @click="showModal = false" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6" x-show="selectedSubmission">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <p class="text-gray-900" x-text="selectedSubmission?.title"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <p class="text-gray-900" x-text="selectedSubmission?.description"></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                            <p class="text-gray-900" x-text="selectedSubmission?.type"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <span class="px-2 py-1 text-xs font-medium rounded-full border" 
+                                  :class="getStatusClass(selectedSubmission?.status)" 
+                                  x-text="selectedSubmission?.status"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Review Notes</label>
+                        <textarea x-model="reviewNotes" 
+                                  class="w-full border border-gray-300 rounded-lg px-3 py-2" 
+                                  rows="4" 
+                                  placeholder="Enter review notes..."></textarea>
+                    </div>
+                    <div class="flex space-x-3 pt-4">
+                        <button @click="approveSubmissionWithNotes()" 
+                                class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-check mr-2"></i>Approve
+                        </button>
+                        <button @click="rejectSubmissionWithNotes()" 
+                                class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-times mr-2"></i>Reject
+                        </button>
+                        <button @click="showModal = false" 
+                                class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function adminDashboard() {
+            return {
+                currentTime: new Date().toLocaleString(),
+                showModal: false,
+                selectedSubmission: null,
+                reviewNotes: '',
+                filterType: 'all',
+                connectionStatus: 'connecting',
+                showNotifications: false,
+                unreadNotifications: 0,
+                notifications: [],
+                signalRConnection: null,
+                stats: {
+                    pendingReviews: 12,
+                    approvedThisWeek: 28,
+                    publishedOnMainnets: 156,
+                    overdueReviews: 3
+                },
+                submissions: [
+                    {
+                        id: 'sub-001',
+                        title: 'AI-Powered Blockchain Patent',
+                        description: 'Revolutionary AI algorithm for blockchain optimization',
+                        type: 'Patent',
+                        status: 'PendingReview',
+                        userId: 'user-123',
+                        submissionDate: new Date('2024-01-15'),
+                        reviewDeadline: new Date('2024-01-22'),
+                        lastUpdated: new Date()
+                    },
+                    {
+                        id: 'sub-002',
+                        title: 'LKS BROTHERS Trademark',
+                        description: 'Brand trademark for LKS BROTHERS ecosystem',
+                        type: 'Trademark',
+                        status: 'UploadingToMainnets',
+                        userId: 'user-456',
+                        submissionDate: new Date('2024-01-14'),
+                        reviewDeadline: new Date('2024-01-21'),
+                        isUploading: true,
+                        uploadProgress: 60,
+                        successfulUploads: 6,
+                        failedUploads: 1,
+                        totalMainnets: 10,
+                        lastUpdated: new Date(Date.now() - 300000)
+                    },
+                    {
+                        id: 'sub-003',
+                        title: 'Software Architecture Copyright',
+                        description: 'Copyright for proprietary software architecture',
+                        type: 'Copyright',
+                        status: 'PublishedOnMainnets',
+                        userId: 'user-789',
+                        submissionDate: new Date('2024-01-13'),
+                        reviewDeadline: new Date('2024-01-20'),
+                        uploadProgress: 100,
+                        successfulUploads: 10,
+                        failedUploads: 0,
+                        totalMainnets: 10,
+                        lastUpdated: new Date(Date.now() - 1800000)
+                    }
+                ],
+                mainnets: [
+                    { id: 1, name: 'LKS IP PATENT Primary', status: 'Active' },
+                    { id: 2, name: 'LKS Rights Secondary', status: 'Active' },
+                    { id: 3, name: 'LKS Web3 Mainnet', status: 'Active' },
+                    { id: 4, name: 'LKS Global Registry', status: 'Maintenance' },
+                    { id: 5, name: 'LKS Authority Network', status: 'Active' }
+                ],
+                recentActivity: [
+                    {
+                        id: 1,
+                        type: 'approval',
+                        icon: 'fas fa-check',
+                        message: 'Patent SUB-003 approved and uploaded to mainnets',
+                        timestamp: new Date()
+                    },
+                    {
+                        id: 2,
+                        type: 'submission',
+                        icon: 'fas fa-upload',
+                        message: 'New trademark submission received',
+                        timestamp: new Date(Date.now() - 3600000)
+                    },
+                    {
+                        id: 3,
+                        type: 'mainnet',
+                        icon: 'fas fa-network-wired',
+                        message: 'All mainnets synchronized successfully',
+                        timestamp: new Date(Date.now() - 7200000)
+                    }
+                ],
+
+                init() {
+                    setInterval(() => {
+                        this.currentTime = new Date().toLocaleString();
+                    }, 1000);
+                    
+                    this.loadData();
+                    this.initializeSignalR();
+                },
+
+                async initializeSignalR() {
+                    try {
+                        this.signalRConnection = new signalR.HubConnectionBuilder()
+                            .withUrl("/realTimeStatusHub")
+                            .withAutomaticReconnect()
+                            .build();
+
+                        // Connection event handlers
+                        this.signalRConnection.onreconnecting(() => {
+                            this.connectionStatus = 'connecting';
+                        });
+
+                        this.signalRConnection.onreconnected(() => {
+                            this.connectionStatus = 'connected';
+                            this.addNotification('success', 'fas fa-wifi', 'Reconnected to real-time updates');
+                        });
+
+                        this.signalRConnection.onclose(() => {
+                            this.connectionStatus = 'disconnected';
+                            this.addNotification('error', 'fas fa-wifi', 'Lost connection to real-time updates');
+                        });
+
+                        // Real-time event handlers
+                        this.signalRConnection.on("SubmissionStatusUpdated", (submissionId, status, progress) => {
+                            this.updateSubmissionStatus(submissionId, status, progress);
+                        });
+
+                        this.signalRConnection.on("MainnetUploadProgress", (submissionId, progress) => {
+                            this.updateUploadProgress(submissionId, progress);
+                        });
+
+                        this.signalRConnection.on("SystemNotification", (message, type) => {
+                            this.addNotification(type, this.getNotificationIcon(type), message);
+                        });
+
+                        this.signalRConnection.on("StatsUpdated", (newStats) => {
+                            this.stats = { ...this.stats, ...newStats };
+                        });
+
+                        // Start connection
+                        await this.signalRConnection.start();
+                        this.connectionStatus = 'connected';
+                        this.addNotification('success', 'fas fa-check', 'Connected to real-time updates');
+                        
+                        // Join admin group for notifications
+                        await this.signalRConnection.invoke("JoinGroup", "AdminDashboard");
+                        
+                    } catch (error) {
+                        console.error('SignalR connection failed:', error);
+                        this.connectionStatus = 'disconnected';
+                        this.addNotification('error', 'fas fa-exclamation-triangle', 'Failed to connect to real-time updates');
+                    }
+                },
+
+                updateSubmissionStatus(submissionId, status, additionalData = {}) {
+                    const submission = this.submissions.find(s => s.id === submissionId);
+                    if (submission) {
+                        submission.status = status;
+                        submission.lastUpdated = new Date();
+                        
+                        // Update additional data if provided
+                        Object.assign(submission, additionalData);
+                        
+                        this.addNotification('info', 'fas fa-sync-alt', 
+                            `Submission ${submissionId} status updated to ${status}`);
+                    }
+                },
+
+                updateUploadProgress(submissionId, progressData) {
+                    const submission = this.submissions.find(s => s.id === submissionId);
+                    if (submission) {
+                        submission.uploadProgress = progressData.percentage;
+                        submission.successfulUploads = progressData.successful;
+                        submission.failedUploads = progressData.failed;
+                        submission.totalMainnets = progressData.total;
+                        submission.isUploading = progressData.percentage < 100;
+                        submission.lastUpdated = new Date();
+                        
+                        if (progressData.percentage === 100) {
+                            submission.status = 'PublishedOnMainnets';
+                            this.addNotification('success', 'fas fa-check-circle', 
+                                `Submission ${submissionId} successfully published to all mainnets`);
+                        }
+                    }
+                },
+
+                addNotification(type, icon, message) {
+                    const notification = {
+                        id: Date.now() + Math.random(),
+                        type: type,
+                        icon: icon,
+                        message: message,
+                        timestamp: new Date(),
+                        read: false
+                    };
+                    
+                    this.notifications.unshift(notification);
+                    this.unreadNotifications++;
+                    
+                    // Keep only last 50 notifications
+                    if (this.notifications.length > 50) {
+                        this.notifications = this.notifications.slice(0, 50);
+                    }
+                    
+                    // Auto-mark as read after 30 seconds
+                    setTimeout(() => {
+                        if (!notification.read) {
+                            notification.read = true;
+                            this.unreadNotifications = Math.max(0, this.unreadNotifications - 1);
+                        }
+                    }, 30000);
+                },
+
+                getNotificationIcon(type) {
+                    const icons = {
+                        'success': 'fas fa-check-circle',
+                        'error': 'fas fa-exclamation-circle',
+                        'warning': 'fas fa-exclamation-triangle',
+                        'info': 'fas fa-info-circle'
+                    };
+                    return icons[type] || 'fas fa-bell';
+                },
+
+                getNotificationColor(type) {
+                    const colors = {
+                        'success': 'text-green-600',
+                        'error': 'text-red-600',
+                        'warning': 'text-yellow-600',
+                        'info': 'text-blue-600'
+                    };
+                    return colors[type] || 'text-gray-600';
+                },
+
+                get filteredSubmissions() {
+                    if (this.filterType === 'all') {
+                        return this.submissions;
+                    }
+                    return this.submissions.filter(sub => sub.type === this.filterType);
+                },
+
+                loadData() {
+                    // Simulate API calls
+                    console.log('Loading dashboard data...');
+                },
+
+                refreshSubmissions() {
+                    console.log('Refreshing submissions...');
+                    // Simulate refresh
+                },
+
+                approveSubmission(id) {
+                    const submission = this.submissions.find(s => s.id === id);
+                    if (submission) {
+                        this.selectedSubmission = submission;
+                        this.showModal = true;
+                    }
+                },
+
+                rejectSubmission(id) {
+                    const submission = this.submissions.find(s => s.id === id);
+                    if (submission) {
+                        this.selectedSubmission = submission;
+                        this.showModal = true;
+                    }
+                },
+
+                viewDetails(id) {
+                    const submission = this.submissions.find(s => s.id === id);
+                    if (submission) {
+                        this.selectedSubmission = submission;
+                        this.showModal = true;
+                    }
+                },
+
+                approveSubmissionWithNotes() {
+                    if (this.selectedSubmission) {
+                        this.selectedSubmission.status = 'Approved';
+                        this.showModal = false;
+                        this.reviewNotes = '';
+                        console.log('Approved:', this.selectedSubmission.id);
+                    }
+                },
+
+                rejectSubmissionWithNotes() {
+                    if (this.selectedSubmission) {
+                        this.selectedSubmission.status = 'Rejected';
+                        this.showModal = false;
+                        this.reviewNotes = '';
+                        console.log('Rejected:', this.selectedSubmission.id);
+                    }
+                },
+
+                getStatusClass(status) {
+                    const classes = {
+                        'PendingReview': 'status-pending',
+                        'UnderReview': 'status-pending',
+                        'Approved': 'status-approved',
+                        'Rejected': 'status-rejected',
+                        'UploadingToMainnets': 'status-uploading',
+                        'PublishedOnMainnets': 'status-published'
+                    };
+                    return classes[status] || 'bg-gray-100 text-gray-800 border-gray-200';
+                },
+
+                getActivityIcon(type) {
+                    const classes = {
+                        'approval': 'bg-green-100 text-green-600',
+                        'submission': 'bg-blue-100 text-blue-600',
+                        'mainnet': 'bg-purple-100 text-purple-600'
+                    };
+                    return classes[type] || 'bg-gray-100 text-gray-600';
+                },
+
+                formatDate(date) {
+                    return new Date(date).toLocaleDateString();
+                },
+
+                formatTime(date) {
+                    const now = new Date();
+                    const diff = now - new Date(date);
+                    const minutes = Math.floor(diff / 60000);
+                    const hours = Math.floor(diff / 3600000);
+                    const days = Math.floor(diff / 86400000);
+                    
+                    if (minutes < 1) return 'just now';
+                    if (minutes < 60) return `${minutes}m ago`;
+                    if (hours < 24) return `${hours}h ago`;
+                    return `${days}d ago`;
+                },
+
+                async refreshSubmissions() {
+                    console.log('Refreshing submissions...');
+                    try {
+                        // Simulate API call to refresh data
+                        const response = await fetch('/api/ippatent/review/submissions');
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.submissions = data.submissions || this.submissions;
+                            this.stats = { ...this.stats, ...data.stats };
+                            this.addNotification('success', 'fas fa-sync-alt', 'Submissions refreshed successfully');
+                        }
+                    } catch (error) {
+                        console.error('Failed to refresh submissions:', error);
+                        this.addNotification('error', 'fas fa-exclamation-triangle', 'Failed to refresh submissions');
+                    }
+                },
+
+                async approveSubmissionWithNotes() {
+                    if (this.selectedSubmission) {
+                        try {
+                            const response = await fetch(`/api/ippatent/review/approve/${this.selectedSubmission.id}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ notes: this.reviewNotes })
+                            });
+                            
+                            if (response.ok) {
+                                this.selectedSubmission.status = 'Approved';
+                                this.selectedSubmission.lastUpdated = new Date();
+                                this.showModal = false;
+                                this.reviewNotes = '';
+                                this.addNotification('success', 'fas fa-check', 
+                                    `Submission ${this.selectedSubmission.id} approved successfully`);
+                                
+                                // Update stats
+                                this.stats.pendingReviews = Math.max(0, this.stats.pendingReviews - 1);
+                                this.stats.approvedThisWeek++;
+                            }
+                        } catch (error) {
+                            console.error('Failed to approve submission:', error);
+                            this.addNotification('error', 'fas fa-exclamation-triangle', 'Failed to approve submission');
+                        }
+                    }
+                },
+
+                async rejectSubmissionWithNotes() {
+                    if (this.selectedSubmission) {
+                        try {
+                            const response = await fetch(`/api/ippatent/review/reject/${this.selectedSubmission.id}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ notes: this.reviewNotes })
+                            });
+                            
+                            if (response.ok) {
+                                this.selectedSubmission.status = 'Rejected';
+                                this.selectedSubmission.lastUpdated = new Date();
+                                this.showModal = false;
+                                this.reviewNotes = '';
+                                this.addNotification('warning', 'fas fa-times', 
+                                    `Submission ${this.selectedSubmission.id} rejected`);
+                                
+                                // Update stats
+                                this.stats.pendingReviews = Math.max(0, this.stats.pendingReviews - 1);
+                            }
+                        } catch (error) {
+                            console.error('Failed to reject submission:', error);
+                            this.addNotification('error', 'fas fa-exclamation-triangle', 'Failed to reject submission');
+                        }
+                    }
+                },
+
+                // Simulate real-time updates for demo purposes
+                startDemoUpdates() {
+                    // Simulate upload progress updates
+                    setInterval(() => {
+                        const uploadingSubmission = this.submissions.find(s => s.isUploading);
+                        if (uploadingSubmission && uploadingSubmission.uploadProgress < 100) {
+                            const increment = Math.random() * 10;
+                            uploadingSubmission.uploadProgress = Math.min(100, uploadingSubmission.uploadProgress + increment);
+                            uploadingSubmission.successfulUploads = Math.floor((uploadingSubmission.uploadProgress / 100) * uploadingSubmission.totalMainnets);
+                            uploadingSubmission.lastUpdated = new Date();
+                            
+                            if (uploadingSubmission.uploadProgress >= 100) {
+                                uploadingSubmission.status = 'PublishedOnMainnets';
+                                uploadingSubmission.isUploading = false;
+                                this.addNotification('success', 'fas fa-check-circle', 
+                                    `Submission ${uploadingSubmission.id} published to all mainnets`);
+                                this.stats.publishedOnMainnets++;
+                            }
+                        }
+                    }, 3000);
+                    
+                    // Simulate new submissions
+                    setInterval(() => {
+                        if (Math.random() < 0.1) { // 10% chance every 10 seconds
+                            const newSubmission = {
+                                id: 'sub-' + Date.now(),
+                                title: 'New IP Submission',
+                                description: 'Automatically generated demo submission',
+                                type: ['Patent', 'Trademark', 'Copyright'][Math.floor(Math.random() * 3)],
+                                status: 'PendingReview',
+                                userId: 'user-' + Math.floor(Math.random() * 1000),
+                                submissionDate: new Date(),
+                                reviewDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                                lastUpdated: new Date()
+                            };
+                            
+                            this.submissions.unshift(newSubmission);
+                            this.stats.pendingReviews++;
+                            this.addNotification('info', 'fas fa-upload', 'New submission received');
+                        }
+                    }, 10000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

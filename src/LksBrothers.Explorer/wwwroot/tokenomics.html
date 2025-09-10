@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LKS COIN Tokenomics | LKS Network Mainnet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="icon" type="image/svg+xml" href="/assets/LKS COIN.svg">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .arc text {
+            font-size: 0.875rem;
+            font-weight: 600;
+            fill: #1f2937;
+        }
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 0.875rem;
+            z-index: 100;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        .logo-glow {
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .chart-container {
+            transition: transform 0.3s ease;
+        }
+        .chart-container:hover {
+            transform: translateY(-5px);
+        }
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .8; }
+        }
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        @keyframes floating {
+            0% { transform: translate(0, 0px); }
+            50% { transform: translate(0, -10px); }
+            100% { transform: translate(0, 0px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen py-12 px-4">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-morphism">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <img src="/assets/LKS COIN.svg" alt="LKS COIN" class="h-10 w-10 logo-glow">
+                    <span class="text-white font-bold text-xl">LKS Network</span>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="/" class="text-white hover:text-yellow-300 transition-colors">Explorer</a>
+                    <a href="/tokenomics.html" class="text-yellow-300 font-semibold">Tokenomics</a>
+                    <a href="https://admin.lksnetwork.io" class="text-white hover:text-yellow-300 transition-colors">Admin</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="w-full max-w-7xl mx-auto pt-24 space-y-16">
+        <!-- Hero Section -->
+        <div class="text-center space-y-8">
+            <div class="floating">
+                <img src="/assets/LKS COIN.svg" alt="LKS COIN" class="h-32 w-32 mx-auto logo-glow">
+            </div>
+            <h1 class="text-5xl sm:text-7xl font-black text-white mb-4">
+                LKS COIN
+            </h1>
+            <p class="text-xl sm:text-2xl text-white/90 font-light max-w-4xl mx-auto leading-relaxed">
+                Mainnet Tokenomics & Economic Model
+            </p>
+            <div class="flex flex-wrap justify-center gap-4 mt-8">
+                <div class="glass-morphism px-6 py-3 rounded-full">
+                    <span class="text-white font-semibold">🚀 Mainnet Live</span>
+                </div>
+                <div class="glass-morphism px-6 py-3 rounded-full">
+                    <span class="text-white font-semibold">⚡ 65,000+ TPS</span>
+                </div>
+                <div class="glass-morphism px-6 py-3 rounded-full">
+                    <span class="text-white font-semibold">🌍 Global Scale</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="glass-morphism p-6 rounded-2xl text-center chart-container">
+                <div class="text-3xl font-bold text-white">1B</div>
+                <div class="text-white/80">Total Supply</div>
+            </div>
+            <div class="glass-morphism p-6 rounded-2xl text-center chart-container">
+                <div class="text-3xl font-bold text-yellow-300">35%</div>
+                <div class="text-white/80">Economic Impact</div>
+            </div>
+            <div class="glass-morphism p-6 rounded-2xl text-center chart-container">
+                <div class="text-3xl font-bold text-green-300">47%</div>
+                <div class="text-white/80">Ecosystem Growth</div>
+            </div>
+            <div class="glass-morphism p-6 rounded-2xl text-center chart-container">
+                <div class="text-3xl font-bold text-blue-300">0%</div>
+                <div class="text-white/80">Transaction Fees</div>
+            </div>
+        </div>
+
+        <!-- Token Supply Allocation -->
+        <div class="glass-morphism p-8 rounded-3xl shadow-2xl chart-container">
+            <h2 class="text-3xl font-bold text-center mb-8 text-white">Initial Token Supply Allocation</h2>
+            <div id="supply-chart-container" class="flex flex-col xl:flex-row justify-center items-center xl:space-x-16">
+                <div class="relative">
+                    <svg id="supply-chart" class="w-full h-80 xl:w-96 xl:h-96"></svg>
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-white">1B</div>
+                            <div class="text-white/80 text-sm">LKS COIN</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="supply-legend" class="mt-8 xl:mt-0 flex-1 space-y-4"></div>
+            </div>
+        </div>
+
+        <!-- Revenue Reinvestment -->
+        <div class="glass-morphism p-8 rounded-3xl shadow-2xl chart-container">
+            <h2 class="text-3xl font-bold text-center mb-8 text-white">Revenue Reinvestment Strategy</h2>
+            <div id="revenue-chart-container" class="flex flex-col xl:flex-row justify-center items-center xl:space-x-16">
+                <div class="relative">
+                    <svg id="revenue-chart" class="w-full h-80 xl:w-96 xl:h-96"></svg>
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-white">100%</div>
+                            <div class="text-white/80 text-sm">Revenue</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="revenue-legend" class="mt-8 xl:mt-0 flex-1 space-y-4"></div>
+            </div>
+        </div>
+
+        <!-- Economic Impact Section -->
+        <div class="glass-morphism p-8 rounded-3xl shadow-2xl">
+            <h2 class="text-3xl font-bold text-center mb-8 text-white">Economic Impact Initiative</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="text-center space-y-3">
+                    <div class="text-4xl">🏗️</div>
+                    <h3 class="text-lg font-semibold text-white">Infrastructure</h3>
+                    <p class="text-white/80 text-sm">Data centers and construction projects</p>
+                </div>
+                <div class="text-center space-y-3">
+                    <div class="text-4xl">🏭</div>
+                    <h3 class="text-lg font-semibold text-white">Manufacturing</h3>
+                    <p class="text-white/80 text-sm">Steel production and industrial growth</p>
+                </div>
+                <div class="text-center space-y-3">
+                    <div class="text-4xl">🏠</div>
+                    <h3 class="text-lg font-semibold text-white">Housing</h3>
+                    <p class="text-white/80 text-sm">Senior housing and community development</p>
+                </div>
+                <div class="text-center space-y-3">
+                    <div class="text-4xl">💼</div>
+                    <h3 class="text-lg font-semibold text-white">Employment</h3>
+                    <p class="text-white/80 text-sm">Job creation across America</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Tokenomics Analyst -->
+        <div class="glass-morphism p-8 rounded-3xl shadow-2xl">
+            <h2 class="text-3xl font-bold text-center mb-8 text-white">
+                <span class="mr-3">🤖</span>AI Tokenomics Analyst
+            </h2>
+            <div class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 mb-8">
+                <input id="user-question" type="text" 
+                       placeholder="Ask about LKS COIN tokenomics, economic impact, or technical details..." 
+                       class="flex-1 p-4 rounded-xl border-0 bg-white/10 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-yellow-300 backdrop-blur-sm">
+                <button id="ask-button" 
+                        class="bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-black font-bold py-4 px-8 rounded-xl transition duration-300 ease-in-out transform hover:scale-105 pulse-animation">
+                    Ask AI ✨
+                </button>
+                <button id="summary-button" 
+                        class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-xl transition duration-300 ease-in-out transform hover:scale-105">
+                    Summary 📊
+                </button>
+            </div>
+            <div id="response-container" class="glass-morphism p-6 rounded-xl min-h-[120px] flex items-center justify-center">
+                <p id="response-text" class="text-white/90 leading-relaxed">Ask me anything about LKS COIN tokenomics and economic impact.</p>
+                <div id="loading-spinner" class="hidden animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-yellow-400"></div>
+            </div>
+        </div>
+
+        <!-- Technical Specifications -->
+        <div class="glass-morphism p-8 rounded-3xl shadow-2xl">
+            <h2 class="text-3xl font-bold text-center mb-8 text-white">Technical Specifications</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="space-y-2">
+                    <h3 class="text-lg font-semibold text-yellow-300">Consensus</h3>
+                    <p class="text-white/80">Proof of History + Proof of Stake</p>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="text-lg font-semibold text-yellow-300">Block Time</h3>
+                    <p class="text-white/80">400ms average</p>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="text-lg font-semibold text-yellow-300">Finality</h3>
+                    <p class="text-white/80">Sub-second</p>
+                </div>
+                <div class="metric-card">
+                    <h3>Transaction Fees</h3>
+                    <p class="metric-value" style="color: #00ff88;">ZERO FEES</p>
+                    <p class="metric-description">Completely free transactions for all users</p>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="text-lg font-semibold text-yellow-300">Throughput</h3>
+                    <p class="text-white/80">65,000+ TPS</p>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="text-lg font-semibold text-yellow-300">Interoperability</h3>
+                    <p class="text-white/80">Cross-chain bridges</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tooltip -->
+        <div id="tooltip" class="tooltip"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-20 glass-morphism">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <div class="text-center">
+                <div class="flex justify-center items-center space-x-4 mb-4">
+                    <img src="/assets/LKS COIN.svg" alt="LKS COIN" class="h-8 w-8 logo-glow">
+                    <span class="text-white font-bold text-lg">LKS Network</span>
+                </div>
+                <p class="text-white/60 text-sm">Building America's Economic Future Through Blockchain Innovation</p>
+                <div class="mt-4 flex justify-center space-x-6">
+                    <a href="/" class="text-white/60 hover:text-white transition-colors">Explorer</a>
+                    <a href="https://admin.lksnetwork.io" class="text-white/60 hover:text-white transition-colors">Admin</a>
+                    <a href="https://rpc.lksnetwork.io" class="text-white/60 hover:text-white transition-colors">RPC</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Enhanced data for mainnet tokenomics
+            const supplyData = [
+                { label: "Economic Impact Donations", value: 35, description: "Direct investment in American infrastructure, manufacturing, and job creation" },
+                { label: "Ecosystem Development", value: 47, description: "Network growth, DeFi protocols, and developer incentives" },
+                { label: "Strategic Partnerships", value: 10, description: "Enterprise partnerships and community giveaways" },
+                { label: "Marketing & Adoption", value: 5, description: "Global marketing campaigns and user acquisition" },
+                { label: "Core Team", value: 3, description: "Development team allocation with vesting schedule" }
+            ];
+
+            const revenueData = [
+                { label: "Economic Donations", value: 35, description: "Continued investment in American economic growth" },
+                { label: "Ecosystem Reinvestment", value: 47, description: "Protocol upgrades, security, and innovation" },
+                { label: "Partnership Expansion", value: 10, description: "New partnerships and community programs" },
+                { label: "Global Marketing", value: 5, description: "Worldwide adoption and brand building" },
+                { label: "Team Development", value: 3, description: "Talent acquisition and retention" }
+            ];
+
+            // Professional color palette for mainnet
+            const colors = [
+                '#FFD700', // Gold
+                '#4F46E5', // Indigo
+                '#059669', // Emerald
+                '#DC2626', // Red
+                '#7C3AED'  // Purple
+            ];
+            const color = d3.scaleOrdinal(colors);
+            
+            function createPieChart(data, svgId, legendId) {
+                const svg = d3.select(svgId);
+                const width = svg.node().getBoundingClientRect().width;
+                const height = svg.node().getBoundingClientRect().height;
+                const radius = Math.min(width, height) / 2.8;
+                const g = svg.append("g").attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+                const pie = d3.pie()
+                    .value(d => d.value)
+                    .sort(null);
+                const dataReady = pie(data);
+
+                const arc = d3.arc()
+                    .innerRadius(radius * 0.4)
+                    .outerRadius(radius);
+
+                const tooltip = d3.select("#tooltip");
+
+                // Create pie slices with animations
+                const slices = g.selectAll('path')
+                    .data(dataReady)
+                    .enter()
+                    .append('path')
+                    .attr('d', arc)
+                    .attr('fill', d => color(d.data.label))
+                    .attr("stroke", "rgba(255, 255, 255, 0.3)")
+                    .style("stroke-width", "2px")
+                    .style("opacity", 0.9)
+                    .style("cursor", "pointer")
+                    .on("mouseover", (event, d) => {
+                        tooltip.style("opacity", 1)
+                            .html(`<strong>${d.data.label}</strong><br/>${d.data.value}%<br/><em>${d.data.description}</em>`)
+                            .style("left", (event.pageX + 15) + "px")
+                            .style("top", (event.pageY - 28) + "px");
+                        d3.select(event.currentTarget)
+                            .style("opacity", 1)
+                            .style("transform", "scale(1.05)");
+                    })
+                    .on("mouseout", (event, d) => {
+                        tooltip.style("opacity", 0);
+                        d3.select(event.currentTarget)
+                            .style("opacity", 0.9)
+                            .style("transform", "scale(1)");
+                    });
+
+                // Animate pie chart entrance
+                slices.transition()
+                    .duration(1000)
+                    .attrTween('d', function(d) {
+                        const interpolate = d3.interpolate({startAngle: 0, endAngle: 0}, d);
+                        return function(t) {
+                            return arc(interpolate(t));
+                        };
+                    });
+
+                // Create legend with enhanced styling
+                const legendContainer = d3.select(legendId);
+                data.forEach((d, i) => {
+                    const item = legendContainer.append("div")
+                        .attr("class", "flex items-start space-x-4 p-4 rounded-xl glass-morphism hover:bg-white/20 transition-all cursor-pointer")
+                        .on("mouseover", function() {
+                            d3.select(this).style("transform", "translateX(5px)");
+                        })
+                        .on("mouseout", function() {
+                            d3.select(this).style("transform", "translateX(0px)");
+                        });
+                    
+                    item.append("div")
+                        .attr("class", "w-6 h-6 rounded-full flex-shrink-0 mt-1")
+                        .style("background-color", color(d.label))
+                        .style("box-shadow", `0 0 10px ${color(d.label)}50`);
+                    
+                    const textContainer = item.append("div").attr("class", "flex-1");
+                    textContainer.append("div")
+                        .text(`${d.label} (${d.value}%)`)
+                        .attr("class", "text-white font-semibold text-lg");
+                    textContainer.append("div")
+                        .text(d.description)
+                        .attr("class", "text-white/70 text-sm mt-1");
+                });
+            }
+
+            // Create charts with staggered animation
+            setTimeout(() => createPieChart(supplyData, "#supply-chart", "#supply-legend"), 200);
+            setTimeout(() => createPieChart(revenueData, "#revenue-chart", "#revenue-legend"), 600);
+
+            // Responsive chart recreation
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    d3.select("#supply-chart").selectAll("*").remove();
+                    d3.select("#revenue-chart").selectAll("*").remove();
+                    d3.select("#supply-legend").selectAll("*").remove();
+                    d3.select("#revenue-legend").selectAll("*").remove();
+                    createPieChart(supplyData, "#supply-chart", "#supply-legend");
+                    createPieChart(revenueData, "#revenue-chart", "#revenue-legend");
+                }, 250);
+            });
+
+            // Enhanced AI Integration
+            const userQuestionInput = document.getElementById('user-question');
+            const askButton = document.getElementById('ask-button');
+            const summaryButton = document.getElementById('summary-button');
+            const responseText = document.getElementById('response-text');
+            const loadingSpinner = document.getElementById('loading-spinner');
+
+            const API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=";
+            const API_KEY = "AIzaSyBOQKKkZGHqDMnJBnxMcYLUDNjlFcPGVzA";
+
+            const coreTokenomicsData = {
+                supply: supplyData,
+                revenue: revenueData,
+                technicalSpecs: {
+                    totalSupply: "1 Billion LKS COIN",
+                    consensus: "Proof of History + Proof of Stake",
+                    blockTime: "400ms average",
+                    throughput: "65,000+ TPS",
+                    fees: "Zero transaction fees (foundation sponsored)",
+                    finality: "Sub-second"
+                }
+            };
+
+            const systemPrompt = `You are the official AI analyst for LKS COIN, a mainnet blockchain project. You have deep expertise in tokenomics, blockchain technology, and economic impact.
+
+            LKS COIN MAINNET SPECIFICATIONS:
+            ${JSON.stringify(coreTokenomicsData, null, 2)}
+
+            KEY POINTS TO EMPHASIZE:
+            - LKS COIN is a live mainnet blockchain with 65,000+ TPS capability
+            - 35% of tokens are dedicated to economic impact donations for American infrastructure
+            - Zero transaction fees make it accessible for all users
+            - Hybrid consensus (PoH + PoS) ensures high performance and security
+            - Focus on real economic impact through job creation and infrastructure development
+
+            Provide professional, accurate responses that reflect the mainnet status and real-world economic impact mission.`;
+
+            async function callGeminiAPI(userQuery) {
+                loadingSpinner.classList.remove('hidden');
+                responseText.classList.add('hidden');
+                
+                try {
+                    const payload = {
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: {
+                            parts: [{ text: systemPrompt }]
+                        },
+                        generationConfig: {
+                            temperature: 0.7,
+                            topK: 40,
+                            topP: 0.95,
+                            maxOutputTokens: 1024,
+                        }
+                    };
+                    
+                    const response = await fetch(API_ENDPOINT + API_KEY, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+                    
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        responseText.innerHTML = candidate.content.parts[0].text.replace(/\n/g, '<br>');
+                    } else {
+                        responseText.innerHTML = "I'm currently processing your request. Please try again in a moment.";
+                    }
+                } catch (error) {
+                    console.error('API call failed:', error);
+                    responseText.innerHTML = "I'm experiencing technical difficulties. Please try again later or contact support.";
+                } finally {
+                    loadingSpinner.classList.add('hidden');
+                    responseText.classList.remove('hidden');
+                }
+            }
+
+            askButton.addEventListener('click', () => {
+                const question = userQuestionInput.value.trim();
+                if (question) {
+                    responseText.innerHTML = "Analyzing your question...";
+                    callGeminiAPI(question);
+                    userQuestionInput.value = '';
+                } else {
+                    responseText.innerHTML = "Please enter a question about LKS COIN tokenomics or technical specifications.";
+                }
+            });
+
+            summaryButton.addEventListener('click', () => {
+                responseText.innerHTML = "Generating comprehensive tokenomics summary...";
+                callGeminiAPI("Provide a comprehensive, professional summary of LKS COIN's mainnet tokenomics, economic impact mission, and technical capabilities. Include key metrics and differentiators.");
+            });
+
+            // Enter key support
+            userQuestionInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    askButton.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

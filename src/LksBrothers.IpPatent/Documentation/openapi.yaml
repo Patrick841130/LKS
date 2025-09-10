@@ -1,0 +1,1037 @@
+openapi: 3.0.3
+info:
+  title: LKS Brothers IP PATENT System API
+  description: |
+    Comprehensive REST API for managing intellectual property patent submissions, reviews, and blockchain publishing within the LKS Network ecosystem.
+    
+    ## Features
+    - Patent submission management
+    - Multi-stage review workflow
+    - Blockchain publishing to multiple networks
+    - Real-time status tracking
+    - Comprehensive analytics
+    - Enterprise-grade security
+    
+    ## Authentication
+    This API supports multiple authentication methods:
+    - API Key authentication
+    - JWT token authentication
+    - OAuth 2.0
+    
+    ## Rate Limiting
+    All endpoints are subject to rate limiting based on your API key scope.
+  version: 1.2.0
+  contact:
+    name: LKS Brothers API Support
+    email: api-support@lksnetwork.io
+    url: https://developers.lksnetwork.io
+  license:
+    name: LKS Brothers License
+    url: https://lksnetwork.io/license
+
+servers:
+  - url: https://api.lksnetwork.io/ip-patent/v1
+    description: Production server
+  - url: https://staging-api.lksnetwork.io/ip-patent/v1
+    description: Staging server
+  - url: https://localhost:5001/api
+    description: Development server
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+  - OAuth2: [read, write]
+
+paths:
+  /submissions:
+    get:
+      summary: List patent submissions
+      description: Retrieve a paginated list of patent submissions with optional filtering
+      tags:
+        - Submissions
+      parameters:
+        - name: status
+          in: query
+          description: Filter by submission status
+          schema:
+            type: string
+            enum: [pending_review, under_review, approved, rejected, published]
+        - name: category
+          in: query
+          description: Filter by patent category
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [submissionDate, title, status, priority]
+            default: submissionDate
+        - name: order
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Submission'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  meta:
+                    $ref: '#/components/schemas/ResponseMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+    post:
+      summary: Create new patent submission
+      description: Submit a new patent application for review
+      tags:
+        - Submissions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubmissionRequest'
+      responses:
+        '201':
+          description: Submission created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/SubmissionResponse'
+                  meta:
+                    $ref: '#/components/schemas/ResponseMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /submissions/{submissionId}:
+    get:
+      summary: Get submission details
+      description: Retrieve detailed information about a specific patent submission
+      tags:
+        - Submissions
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          description: Unique submission identifier
+          schema:
+            type: string
+            pattern: '^sub_[a-zA-Z0-9]+$'
+      responses:
+        '200':
+          description: Submission details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/SubmissionDetail'
+                  meta:
+                    $ref: '#/components/schemas/ResponseMeta'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update submission
+      description: Update an existing patent submission
+      tags:
+        - Submissions
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSubmissionRequest'
+      responses:
+        '200':
+          description: Submission updated successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete submission
+      description: Delete a patent submission (only allowed for pending submissions)
+      tags:
+        - Submissions
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Submission deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Cannot delete submission in current status
+
+  /reviews:
+    get:
+      summary: List reviews
+      description: Get list of reviews assigned to the current user
+      tags:
+        - Reviews
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, completed]
+        - name: assignee
+          in: query
+          schema:
+            type: string
+            enum: [current, all]
+            default: current
+      responses:
+        '200':
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+
+  /reviews/{reviewId}:
+    get:
+      summary: Get review details
+      description: Retrieve detailed information about a specific review
+      tags:
+        - Reviews
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Review details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewDetail'
+
+  /reviews/{reviewId}/decision:
+    post:
+      summary: Submit review decision
+      description: Submit a decision for a patent review
+      tags:
+        - Reviews
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewDecisionRequest'
+      responses:
+        '200':
+          description: Review decision submitted successfully
+
+  /blockchain/publish/{submissionId}:
+    post:
+      summary: Publish to blockchain
+      description: Publish an approved patent to multiple blockchain networks
+      tags:
+        - Blockchain
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishRequest'
+      responses:
+        '202':
+          description: Publishing initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishResponse'
+
+  /blockchain/status/{publishId}:
+    get:
+      summary: Get blockchain publishing status
+      description: Check the status of a blockchain publishing operation
+      tags:
+        - Blockchain
+      parameters:
+        - name: publishId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Publishing status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishStatus'
+
+  /analytics/submissions:
+    get:
+      summary: Get submission analytics
+      description: Retrieve analytics data for patent submissions
+      tags:
+        - Analytics
+      parameters:
+        - name: period
+          in: query
+          description: Time period for analytics
+          schema:
+            type: string
+            enum: [7d, 30d, 90d, 1y]
+            default: 30d
+        - name: category
+          in: query
+          description: Filter by category
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionAnalytics'
+
+  /apikey/generate:
+    post:
+      summary: Generate API key
+      description: Generate a new API key for programmatic access
+      tags:
+        - API Keys
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateApiKeyRequest'
+      responses:
+        '201':
+          description: API key generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateApiKeyResponse'
+
+  /apikey/my-keys:
+    get:
+      summary: List my API keys
+      description: Get all API keys for the authenticated user
+      tags:
+        - API Keys
+      responses:
+        '200':
+          description: List of API keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiKeyInfo'
+
+  /backup/full:
+    post:
+      summary: Create full backup
+      description: Initiate a full system backup
+      tags:
+        - Backup
+      security:
+        - BearerAuth: []
+      responses:
+        '202':
+          description: Backup initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.lksnetwork.io/oauth/authorize
+          tokenUrl: https://auth.lksnetwork.io/oauth/token
+          scopes:
+            read: Read access to resources
+            write: Write access to resources
+            admin: Administrative access
+
+  schemas:
+    Submission:
+      type: object
+      properties:
+        submissionId:
+          type: string
+          example: "sub_123456789"
+        title:
+          type: string
+          example: "Revolutionary AI Algorithm"
+        status:
+          type: string
+          enum: [pending_review, under_review, approved, rejected, published]
+        category:
+          type: string
+          example: "Software"
+        submissionDate:
+          type: string
+          format: date-time
+        lastUpdated:
+          type: string
+          format: date-time
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+
+    SubmissionDetail:
+      allOf:
+        - $ref: '#/components/schemas/Submission'
+        - type: object
+          properties:
+            description:
+              type: string
+            inventors:
+              type: array
+              items:
+                $ref: '#/components/schemas/Inventor'
+            documents:
+              type: array
+              items:
+                $ref: '#/components/schemas/Document'
+            progress:
+              $ref: '#/components/schemas/Progress'
+            reviewers:
+              type: array
+              items:
+                $ref: '#/components/schemas/Reviewer'
+            comments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Comment'
+
+    CreateSubmissionRequest:
+      type: object
+      required:
+        - title
+        - description
+        - category
+        - inventors
+      properties:
+        title:
+          type: string
+          minLength: 10
+          maxLength: 200
+        description:
+          type: string
+          minLength: 100
+        category:
+          type: string
+          enum: [Software, Hardware, Biotechnology, Chemical, Mechanical, Electrical]
+        inventors:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Inventor'
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentUpload'
+        claims:
+          type: array
+          items:
+            type: string
+        priorArt:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriorArt'
+        metadata:
+          type: object
+          properties:
+            priority:
+              type: string
+              enum: [low, medium, high]
+            confidential:
+              type: boolean
+            estimatedValue:
+              type: number
+
+    UpdateSubmissionRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high]
+
+    SubmissionResponse:
+      type: object
+      properties:
+        submissionId:
+          type: string
+        status:
+          type: string
+        submissionDate:
+          type: string
+          format: date-time
+        reviewDeadline:
+          type: string
+          format: date-time
+        estimatedProcessingTime:
+          type: string
+        trackingUrl:
+          type: string
+
+    Inventor:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        affiliation:
+          type: string
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [specification, claims, drawings, abstract]
+        filename:
+          type: string
+        uploadDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        size:
+          type: integer
+
+    DocumentUpload:
+      type: object
+      required:
+        - type
+        - filename
+        - content
+      properties:
+        type:
+          type: string
+        filename:
+          type: string
+        content:
+          type: string
+          format: base64
+
+    Progress:
+      type: object
+      properties:
+        percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Stage'
+
+    Stage:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed]
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        estimatedCompletion:
+          type: string
+          format: date-time
+
+    Review:
+      type: object
+      properties:
+        reviewId:
+          type: string
+        submissionId:
+          type: string
+        reviewType:
+          type: string
+          enum: [technical, legal, prior_art, final]
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+        assignedAt:
+          type: string
+          format: date-time
+        deadline:
+          type: string
+          format: date-time
+
+    ReviewDetail:
+      allOf:
+        - $ref: '#/components/schemas/Review'
+        - type: object
+          properties:
+            submission:
+              $ref: '#/components/schemas/Submission'
+            reviewer:
+              $ref: '#/components/schemas/Reviewer'
+            checklist:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChecklistItem'
+
+    ReviewDecisionRequest:
+      type: object
+      required:
+        - decision
+      properties:
+        decision:
+          type: string
+          enum: [approved, rejected, needs_revision]
+        comments:
+          type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+        nextStage:
+          type: string
+
+    Reviewer:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+        specialization:
+          type: string
+        experience:
+          type: string
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+        author:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        type:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+          enum: [open, resolved]
+
+    ChecklistItem:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, passed, failed, na]
+        notes:
+          type: string
+
+    PriorArt:
+      type: object
+      properties:
+        title:
+          type: string
+        patentNumber:
+          type: string
+        publicationDate:
+          type: string
+          format: date
+        relevance:
+          type: string
+        url:
+          type: string
+
+    PublishRequest:
+      type: object
+      required:
+        - networks
+      properties:
+        networks:
+          type: array
+          items:
+            type: string
+            enum: [ethereum, polygon, bsc, arbitrum, optimism]
+        metadata:
+          type: object
+          properties:
+            ipfsHash:
+              type: string
+            priority:
+              type: string
+              enum: [low, medium, high]
+
+    PublishResponse:
+      type: object
+      properties:
+        publishId:
+          type: string
+        status:
+          type: string
+        networks:
+          type: array
+          items:
+            $ref: '#/components/schemas/NetworkStatus'
+        estimatedTotalTime:
+          type: string
+
+    PublishStatus:
+      type: object
+      properties:
+        publishId:
+          type: string
+        status:
+          type: string
+        networks:
+          type: array
+          items:
+            $ref: '#/components/schemas/NetworkStatus'
+        completedNetworks:
+          type: integer
+        totalNetworks:
+          type: integer
+
+    NetworkStatus:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirming, confirmed, failed]
+        transactionHash:
+          type: string
+        blockNumber:
+          type: integer
+        gasUsed:
+          type: integer
+        estimatedCompletion:
+          type: string
+          format: date-time
+
+    SubmissionAnalytics:
+      type: object
+      properties:
+        period:
+          type: string
+        totalSubmissions:
+          type: integer
+        approvedSubmissions:
+          type: integer
+        rejectedSubmissions:
+          type: integer
+        pendingSubmissions:
+          type: integer
+        averageProcessingTime:
+          type: string
+        categoryBreakdown:
+          type: object
+        dailyStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyStats'
+
+    DailyStats:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        submissions:
+          type: integer
+        approvals:
+          type: integer
+        rejections:
+          type: integer
+
+    GenerateApiKeyRequest:
+      type: object
+      required:
+        - description
+      properties:
+        description:
+          type: string
+          minLength: 5
+          maxLength: 100
+        scope:
+          type: string
+          enum: [ReadOnly, Standard, Premium, Admin]
+          default: Standard
+
+    GenerateApiKeyResponse:
+      type: object
+      properties:
+        apiKey:
+          type: string
+          description: "The API key (only shown once)"
+        keyId:
+          type: string
+        description:
+          type: string
+        scope:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        rateLimitPerHour:
+          type: integer
+
+    ApiKeyInfo:
+      type: object
+      properties:
+        keyId:
+          type: string
+        description:
+          type: string
+        scope:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        isActive:
+          type: boolean
+        lastUsedAt:
+          type: string
+          format: date-time
+        usageCount:
+          type: integer
+        maskedKey:
+          type: string
+
+    BackupResponse:
+      type: object
+      properties:
+        backupId:
+          type: string
+        status:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        estimatedCompletion:
+          type: string
+          format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    ResponseMeta:
+      type: object
+      properties:
+        requestId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    RateLimitExceeded:
+      description: Rate limit exceeded
+      headers:
+        X-Rate-Limit-Limit:
+          schema:
+            type: integer
+        X-Rate-Limit-Remaining:
+          schema:
+            type: integer
+        X-Rate-Limit-Reset:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Submissions
+    description: Patent submission management
+  - name: Reviews
+    description: Patent review workflow
+  - name: Blockchain
+    description: Blockchain publishing operations
+  - name: Analytics
+    description: System analytics and reporting
+  - name: API Keys
+    description: API key management
+  - name: Backup
+    description: System backup operations
