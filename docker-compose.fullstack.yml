@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  # Node.js Payment Backend
+  payment-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    container_name: lks-payment-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - RIPPLE_SERVER=wss://s1.ripple.com
+      - NODE_ENV=production
+    networks:
+      - lks-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ASP.NET Core Explorer
+  explorer-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lks-explorer-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - JWT_KEY=${JWT_KEY}
+      - JWT_ISSUER=${JWT_ISSUER}
+      - JWT_AUDIENCE=${JWT_AUDIENCE}
+      - DATABASE_CONNECTION_STRING=${DATABASE_CONNECTION_STRING}
+      - REDIS_CONNECTION_STRING=redis:6379
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - BLOCKCHAIN_RPC_ENDPOINT=${BLOCKCHAIN_RPC_ENDPOINT}
+      - BLOCKCHAIN_WEBSOCKET_ENDPOINT=${BLOCKCHAIN_WEBSOCKET_ENDPOINT}
+      - BLOCKCHAIN_NETWORK_ID=${BLOCKCHAIN_NETWORK_ID}
+      - NODE_BACKEND_URL=http://payment-backend:3000
+    depends_on:
+      - redis
+      - payment-backend
+    networks:
+      - lks-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: lks-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - lks-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: lks-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.fullstack.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./demo-explorer.html:/usr/share/nginx/html/index.html:ro
+      - ./assets:/usr/share/nginx/html/assets:ro
+    depends_on:
+      - explorer-backend
+      - payment-backend
+    networks:
+      - lks-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  redis_data:
+
+networks:
+  lks-network:
+    driver: bridge

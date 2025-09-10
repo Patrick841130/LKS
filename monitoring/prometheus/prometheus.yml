@@ -1,0 +1,72 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # LKS Network Node Metrics
+  - job_name: 'lks-node'
+    static_configs:
+      - targets: ['lks-node:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # Explorer Service Metrics
+  - job_name: 'lks-explorer'
+    static_configs:
+      - targets: ['lks-explorer:5000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Admin Service Metrics
+  - job_name: 'lks-admin'
+    static_configs:
+      - targets: ['lks-admin:5001']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Infrastructure Monitoring
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+
+  # Container Metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 15s
+
+  # Redis Metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 15s
+
+  # Nginx Metrics
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+    scrape_interval: 15s
+
+  # Elasticsearch Metrics
+  - job_name: 'elasticsearch'
+    static_configs:
+      - targets: ['elasticsearch-exporter:9114']
+    scrape_interval: 30s
+
+  # Custom Application Metrics
+  - job_name: 'lks-custom-metrics'
+    static_configs:
+      - targets: ['lks-monitoring:8082']
+    metrics_path: '/api/metrics'
+    scrape_interval: 10s

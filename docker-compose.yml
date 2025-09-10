@@ -1,0 +1,263 @@
+version: '3.8'
+
+services:
+  # Genesis Block Creator
+  genesis:
+    build:
+      context: .
+      dockerfile: src/LksBrothers.Genesis/Dockerfile
+    container_name: lks-genesis
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - GENESIS_CONFIG_PATH=/app/config/genesis.json
+    volumes:
+      - ./config:/app/config
+      - ./data:/app/data
+    networks:
+      - lks-network
+
+  # Primary Validator
+  validator-1:
+    build:
+      context: .
+      dockerfile: src/LksBrothers.Firedancer/Dockerfile
+    container_name: lks-validator-1
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - VALIDATOR_ID=1
+      - VALIDATOR_PORT=8001
+      - CONSENSUS_PORT=9001
+    ports:
+      - "8001:8001"
+      - "9001:9001"
+    volumes:
+      - ./data/validator-1:/app/data
+      - ./config:/app/config
+    depends_on:
+      - genesis
+    networks:
+      - lks-network
+
+  # Secondary Validator
+  validator-2:
+    build:
+      context: .
+      dockerfile: src/LksBrothers.Firedancer/Dockerfile
+    container_name: lks-validator-2
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - VALIDATOR_ID=2
+      - VALIDATOR_PORT=8002
+      - CONSENSUS_PORT=9002
+    ports:
+      - "8002:8002"
+      - "9002:9002"
+    volumes:
+      - ./data/validator-2:/app/data
+      - ./config:/app/config
+    depends_on:
+      - genesis
+    networks:
+      - lks-network
+
+  # Backup Validator
+  validator-3:
+    build:
+      context: .
+      dockerfile: src/LksBrothers.Firedancer/Dockerfile
+    container_name: lks-validator-3
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - VALIDATOR_ID=3
+      - VALIDATOR_PORT=8003
+      - CONSENSUS_PORT=9003
+    ports:
+      - "8003:8003"
+      - "9003:9003"
+    volumes:
+      - ./data/validator-3:/app/data
+      - ./config:/app/config
+    depends_on:
+      - genesis
+    networks:
+      - lks-network
+
+  # RPC API Node
+  rpc-node:
+    build:
+      context: .
+      dockerfile: src/LksBrothers.RPC/Dockerfile
+    container_name: lks-rpc
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - RPC_PORT=8545
+      - ENABLE_CORS=true
+    ports:
+      - "8545:8545"
+    volumes:
+      - ./data/rpc:/app/data
+      - ./config:/app/config
+    depends_on:
+      - validator-1
+      - validator-2
+      - validator-3
+    networks:
+      - lks-network
+
+  # Block Explorer Backend
+  explorer-api:
+    build:
+      context: .
+      dockerfile: src/LksBrothers.Explorer/Dockerfile
+    container_name: lks-explorer-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - API_PORT=8080
+      - DATABASE_URL=postgresql://postgres:lkspassword@explorer-db:5432/lks_explorer
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      - explorer-db
+      - rpc-node
+    networks:
+      - lks-network
+
+  # Explorer Database
+  explorer-db:
+    image: postgres:15-alpine
+    container_name: lks-explorer-db
+    environment:
+      - POSTGRES_DB=lks_explorer
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=lkspassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - lks-network
+
+  # Wallet Service
+  wallet:
+    build:
+      context: .
+      dockerfile: src/LksBrothers.Wallet/Dockerfile
+    container_name: lks-wallet
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - WALLET_PORT=3000
+      - RPC_ENDPOINT=http://rpc-node:8545
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      - rpc-node
+    networks:
+      - lks-network
+
+  # Cross-Chain Bridge
+  bridge:
+    build:
+      context: .
+      dockerfile: src/LksBrothers.CrossChain/Dockerfile
+    container_name: lks-bridge
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - BRIDGE_PORT=8888
+      - WORMHOLE_ENDPOINT=https://wormhole-v2-mainnet-api.certus.one
+      - CCIP_ENDPOINT=https://ccip.chain.link
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      - rpc-node
+    networks:
+      - lks-network
+
+  # Compliance Engine
+  compliance:
+    build:
+      context: .
+      dockerfile: src/LksBrothers.Compliance/Dockerfile
+    container_name: lks-compliance
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - COMPLIANCE_PORT=8999
+      - KYC_PROVIDER_URL=https://api.jumio.com
+      - SANCTIONS_LIST_URL=https://api.chainalysis.com
+    ports:
+      - "8999:8999"
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      - rpc-node
+    networks:
+      - lks-network
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: lks-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - lks-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: lks-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=lksadmin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - lks-network
+
+  # Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: lks-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - rpc-node
+      - explorer-api
+      - wallet
+    networks:
+      - lks-network
+
+networks:
+  lks-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:

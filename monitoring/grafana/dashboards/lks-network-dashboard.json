@@ -1,0 +1,260 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "LKS Network - Production Monitoring",
+    "tags": ["lks", "blockchain", "mainnet"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "30s",
+    "schemaVersion": 27,
+    "version": 1,
+    "panels": [
+      {
+        "id": 1,
+        "title": "Network Overview",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "lks_blocks_total",
+            "legendFormat": "Total Blocks"
+          },
+          {
+            "expr": "rate(lks_transactions_processed_total[5m])",
+            "legendFormat": "TPS"
+          },
+          {
+            "expr": "lks_peer_count",
+            "legendFormat": "Connected Peers"
+          },
+          {
+            "expr": "lks_validator_count",
+            "legendFormat": "Active Validators"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "orientation": "horizontal",
+          "textMode": "auto",
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {"hideFrom": {"legend": false, "tooltip": false, "vis": false}},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "red", "value": 80}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Transaction Throughput",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(lks_transactions_processed_total[1m])",
+            "legendFormat": "Transactions per Second"
+          },
+          {
+            "expr": "lks_transaction_pool_size",
+            "legendFormat": "Pending Transactions"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "yAxes": [
+          {"label": "TPS", "show": true},
+          {"label": "Pool Size", "show": true}
+        ],
+        "xAxis": {"show": true},
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "points": false,
+        "pointradius": 2,
+        "bars": false,
+        "stack": false,
+        "percentage": false,
+        "legend": {"show": true, "values": false, "min": false, "max": false, "current": false, "total": false, "avg": false},
+        "nullPointMode": "null",
+        "steppedLine": false,
+        "tooltip": {"value_type": "individual"},
+        "timeFrom": null,
+        "timeShift": null
+      },
+      {
+        "id": 3,
+        "title": "Block Production",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(lks_blocks_total[1m])",
+            "legendFormat": "Blocks per Minute"
+          },
+          {
+            "expr": "lks_average_block_time",
+            "legendFormat": "Average Block Time (ms)"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "yAxes": [
+          {"label": "Blocks/min", "show": true},
+          {"label": "Block Time (ms)", "show": true}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "System Resources",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "CPU Usage %"
+          },
+          {
+            "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+            "legendFormat": "Memory Usage %"
+          },
+          {
+            "expr": "(1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100",
+            "legendFormat": "Disk Usage %"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "yAxes": [{"label": "Percentage", "show": true, "min": 0, "max": 100}],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [80], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "for": "5m",
+          "frequency": "10s",
+          "handler": 1,
+          "name": "High Resource Usage",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      },
+      {
+        "id": 5,
+        "title": "API Performance",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th Percentile Response Time"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th Percentile Response Time"
+          },
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "Requests per Second"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "yAxes": [
+          {"label": "Response Time (s)", "show": true},
+          {"label": "Requests/sec", "show": true}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Network Health",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "lks_network_health_score",
+            "legendFormat": "Health Score"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 24},
+        "valueName": "current",
+        "colorBackground": true,
+        "thresholds": "70,90",
+        "colors": ["#d44a3a", "#e24d42", "#299c46"],
+        "sparkline": {"show": true, "full": false, "lineColor": "rgb(31, 120, 193)", "fillColor": "rgba(31, 118, 189, 0.18)"},
+        "gauge": {"show": true, "minValue": 0, "maxValue": 100, "thresholdMarkers": true}
+      },
+      {
+        "id": 7,
+        "title": "Active Users",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "lks_active_users_total",
+            "legendFormat": "Active Users"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 24},
+        "valueName": "current",
+        "colorBackground": false,
+        "sparkline": {"show": true, "full": false}
+      },
+      {
+        "id": 8,
+        "title": "Error Rate",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\"5..\"}[5m]) / rate(http_requests_total[5m]) * 100",
+            "legendFormat": "Error Rate %"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 24},
+        "valueName": "current",
+        "colorBackground": true,
+        "thresholds": "1,5",
+        "colors": ["#299c46", "#e24d42", "#d44a3a"],
+        "sparkline": {"show": true, "full": false}
+      },
+      {
+        "id": 9,
+        "title": "Uptime",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "up{job=\"lks-node\"}",
+            "legendFormat": "Node Uptime"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 24},
+        "valueName": "current",
+        "colorBackground": true,
+        "thresholds": "0.5,0.9",
+        "colors": ["#d44a3a", "#e24d42", "#299c46"],
+        "valueMaps": [
+          {"value": "1", "text": "UP"},
+          {"value": "0", "text": "DOWN"}
+        ]
+      }
+    ],
+    "time": {"from": "now-1h", "to": "now"},
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+      "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+    },
+    "templating": {"list": []},
+    "annotations": {"list": []},
+    "links": []
+  }
+}

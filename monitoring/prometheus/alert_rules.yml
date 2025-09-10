@@ -1,0 +1,180 @@
+groups:
+  - name: lks_network_alerts
+    rules:
+      # High-Level System Alerts
+      - alert: LKSNetworkDown
+        expr: up{job="lks-node"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "LKS Network node is down"
+          description: "LKS Network node {{ $labels.instance }} has been down for more than 30 seconds."
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second on {{ $labels.instance }}"
+
+      # Performance Alerts
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time"
+          description: "95th percentile response time is {{ $value }}s on {{ $labels.instance }}"
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk space low"
+          description: "Disk usage is {{ $value }}% on {{ $labels.instance }}"
+
+      # Blockchain-Specific Alerts
+      - alert: BlockProductionStopped
+        expr: increase(lks_blocks_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Block production stopped"
+          description: "No new blocks produced in the last 5 minutes"
+
+      - alert: LowPeerCount
+        expr: lks_peer_count < 5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low peer count"
+          description: "Peer count is {{ $value }}, below minimum threshold"
+
+      - alert: HighTransactionPoolSize
+        expr: lks_transaction_pool_size > 10000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High transaction pool size"
+          description: "Transaction pool size is {{ $value }}, indicating potential congestion"
+
+      - alert: ValidatorOffline
+        expr: lks_validator_online == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Validator offline"
+          description: "Validator {{ $labels.validator }} is offline"
+
+      # Infrastructure Alerts
+      - alert: ContainerDown
+        expr: up{job="cadvisor"} == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container monitoring down"
+          description: "cAdvisor container monitoring is down on {{ $labels.instance }}"
+
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis is down"
+          description: "Redis instance {{ $labels.instance }} is down"
+
+      - alert: ElasticsearchDown
+        expr: up{job="elasticsearch"} == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elasticsearch is down"
+          description: "Elasticsearch instance {{ $labels.instance }} is down"
+
+      # Network and Connectivity
+      - alert: HighNetworkLatency
+        expr: lks_network_latency_seconds > 0.1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High network latency"
+          description: "Network latency is {{ $value }}s on {{ $labels.instance }}"
+
+      - alert: NetworkPartition
+        expr: lks_connected_peers / lks_total_known_peers < 0.5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Potential network partition"
+          description: "Connected to only {{ $value }}% of known peers"
+
+      # Security Alerts
+      - alert: UnauthorizedAccess
+        expr: rate(http_requests_total{status="401"}[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High unauthorized access attempts"
+          description: "{{ $value }} unauthorized access attempts per second on {{ $labels.instance }}"
+
+      - alert: DDoSAttack
+        expr: rate(http_requests_total[1m]) > 1000
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Potential DDoS attack"
+          description: "{{ $value }} requests per second detected on {{ $labels.instance }}"
+
+      # Business Logic Alerts
+      - alert: LowTransactionThroughput
+        expr: rate(lks_transactions_processed_total[5m]) < 1000
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low transaction throughput"
+          description: "Transaction throughput is {{ $value }} TPS, below expected performance"
+
+      - alert: HighGasPrice
+        expr: lks_average_gas_price > 100
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "High gas price detected"
+          description: "Average gas price is {{ $value }}, indicating network congestion"

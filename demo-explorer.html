@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LKS NETWORK | Mainnet Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #1565C0;
+            --primary-orange: #F57C00;
+            --light-blue: #4FC3F7;
+            --light-orange: #FFB74D;
+            --dark-bg: #0A0B0D;
+            --card-bg: rgba(255, 255, 255, 0.02);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0BEC5;
+            --text-muted: #78909C;
+            --success: #00E676;
+            --warning: #FFD54F;
+            --error: #FF5252;
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--dark-bg);
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(69, 90, 120, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(245, 124, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(21, 101, 192, 0.1) 0%, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+            font-weight: 400;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .header {
+            background: rgba(10, 11, 13, 0.95);
+            backdrop-filter: blur(32px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 1.25rem 2rem;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--light-blue), var(--primary-blue));
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(79, 195, 247, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .logo-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(79, 195, 247, 0.4);
+        }
+
+        .brand-text h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--light-blue), var(--primary-blue), var(--light-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+            letter-spacing: -0.025em;
+        }
+
+        .subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: -0.125rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-left: 3rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.875rem;
+            padding: 0.5rem 0;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--light-blue);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .search-container {
+            position: relative;
+            margin-right: 1rem;
+        }
+
+        .search-input {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            width: 280px;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--light-blue);
+            box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 16px;
+            height: 16px;
+        }
+
+        .network-status {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(0, 230, 118, 0.1);
+            padding: 0.625rem 1.25rem;
+            border-radius: 24px;
+            border: 1px solid rgba(0, 230, 118, 0.2);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 8px rgba(0, 230, 118, 0.5);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .hero-section {
+            text-align: center;
+            padding: 4rem 0 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .hero-logo {
+            margin-bottom: 30px;
+            animation: logoFloat 6s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--light-blue), var(--primary-blue), var(--light-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--light-blue), var(--light-orange));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: rgba(79, 195, 247, 0.3);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-change {
+            font-size: 0.875rem;
+            color: var(--success);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .section {
+            background: var(--card-bg);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+            letter-spacing: -0.01em;
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: rgba(79, 195, 247, 0.1);
+            border-color: var(--light-blue);
+            color: var(--text-primary);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .table th {
+            padding: 1.25rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .table td {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .table tr:hover {
+            background: rgba(79, 195, 247, 0.05);
+        }
+
+        .hash {
+            font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+            font-size: 0.8125rem;
+            color: var(--light-blue);
+            background: rgba(79, 195, 247, 0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            border: 1px solid rgba(79, 195, 247, 0.2);
+        }
+
+        .amount {
+            color: var(--success);
+            font-weight: 700;
+            font-size: 0.9375rem;
+        }
+
+        .status-badge {
+            background: var(--success);
+            color: var(--dark-bg);
+            padding: 0.375rem 0.875rem;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .metric-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 0.5rem;
+            opacity: 0.7;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-actions .btn {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .section-actions .btn:hover,
+        .section-actions .btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Login Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .login-tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.1);
+        }
+
+        .login-submit-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 1rem;
+        }
+
+        .login-submit-btn:hover {
+            background: var(--light-blue);
+            transform: translateY(-1px);
+        }
+
+        .demo-accounts {
+            text-align: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .demo-accounts p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .demo-btn {
+            margin: 0 0.5rem 0.5rem 0;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .demo-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .wallet-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .wallet-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+        }
+
+        .wallet-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        .wallet-icon {
+            font-size: 1.5rem;
+        }
+
+        .wallet-info {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .wallet-info p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .auth-section {
+            margin: 0 1rem;
+        }
+
+        .login-btn {
+            padding: 0.5rem 1rem;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .login-btn:hover {
+            background: var(--light-blue);
+            transform: translateY(-1px);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-menu span {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            padding: 0.25rem 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: rgba(255, 0, 0, 0.5);
+            color: #ff6b6b;
+        }
+
+        .genesis-info {
+            background: linear-gradient(135deg, #4FC3F7, #1565C0, #FFB74D);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .genesis-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .genesis-info > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .genesis-logo {
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .footer {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            margin-top: 3rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-text {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .lks-branding {
+            font-weight: 600;
+            background: linear-gradient(135deg, #4FC3F7, #FFB74D);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .genesis-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .genesis-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .genesis-detail {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .live-counter {
+            animation: countUp 2s ease-out;
+        }
+
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="assets/LKS NETWORK LOGO.svg" alt="LKS NETWORK" style="height: 40px; width: auto;">
+                    <div class="logo-text">
+                        <div class="logo-title">LKS NETWORK</div>
+                        <div class="logo-subtitle">MAINNET EXPLORER</div>
+                    </div>
+                </div>
+                <nav class="nav-links">
+                    <a href="#" class="nav-link active">Explorer</a>
+                    <a href="#" class="nav-link">Validators</a>
+                    <a href="#" class="nav-link">Analytics</a>
+                    <a href="#" class="nav-link">API</a>
+                </nav>
+            </div>
+            <div class="header-actions">
+                <div class="search-container">
+                    <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <input type="text" class="search-input" placeholder="Search blocks, transactions, addresses..." id="searchInput">
+                </div>
+                <div class="auth-section">
+                    <button class="btn btn-secondary" onclick="showPaymentModal()" style="margin-right: 1rem;">Send XRP</button>
+                    <button class="login-btn" id="loginBtn" onclick="openLoginModal()">Login</button>
+                    <div class="user-menu" id="userMenu" style="display: none;">
+                        <span id="userName">User</span>
+                        <button class="logout-btn" onclick="logout()">Logout</button>
+                    </div>
+                </div>
+                <div class="network-status">
+                    <div class="status-indicator"></div>
+                    <span>Mainnet Live</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="loginModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Login to LKS NETWORK Explorer</h2>
+                <button class="close-btn" onclick="closeLoginModal()">×</button>
+            </div>
+            <div class="modal-content">
+                <div class="login-tabs">
+                    <button class="tab-btn active" onclick="switchTab('email')">Email Login</button>
+                    <button class="tab-btn" onclick="switchTab('wallet')">Wallet Connect</button>
+                </div>
+                
+                <!-- Email Login -->
+                <div class="login-form" id="emailLogin">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="emailInput" placeholder="Enter your email">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="passwordInput" placeholder="Enter your password">
+                    </div>
+                    <button class="login-submit-btn" onclick="loginWithEmail()">Login</button>
+                    <div class="demo-accounts">
+                        <p>Demo Accounts:</p>
+                        <button class="demo-btn" onclick="fillDemoAccount('admin')">Admin</button>
+                        <button class="demo-btn" onclick="fillDemoAccount('validator')">Validator</button>
+                        <button class="demo-btn" onclick="fillDemoAccount('user')">User</button>
+                    </div>
+                </div>
+
+                <!-- Wallet Login -->
+                <div class="login-form" id="walletLogin" style="display: none;">
+                    <div class="wallet-options">
+                        <button class="wallet-btn" onclick="connectWallet('metamask')">
+                            <span class="wallet-icon">🦊</span>
+                            MetaMask
+                        </button>
+                        <button class="wallet-btn" onclick="connectWallet('phantom')">
+                            <span class="wallet-icon">👻</span>
+                            Phantom
+                        </button>
+                        <button class="wallet-btn" onclick="connectWallet('lks')">
+                            <span class="wallet-icon">💎</span>
+                            LKS Wallet
+                        </button>
+                    </div>
+                    <div class="wallet-info">
+                        <p>Connect your wallet to access advanced features and manage your LKS tokens.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-logo">
+                <img src="assets/LKS NETWORK LOGO.svg" alt="LKS NETWORK" style="width: 400px; height: auto; max-width: 100%;">
+            </div>
+            <p class="hero-subtitle">Zero Transaction Fee, Made in USA</p>
+        </div>
+
+        <!-- Network Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Current Block</div>
+                <div class="stat-value live-counter" id="blockHeight">2,847,392</div>
+                <div class="stat-change">+1 every 400ms</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Transactions</div>
+                <div class="stat-value live-counter" id="totalTx">847,293,847</div>
+                <div class="stat-change">+62,847 per second</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Current TPS</div>
+                <div class="stat-value live-counter" id="currentTps">62,847</div>
+                <div class="stat-change">Peak: 65,000</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Validators</div>
+                <div class="stat-value live-counter" id="activeValidators">3</div>
+                <div class="stat-change">100% uptime</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Network Health</div>
+                <div class="stat-value live-counter" id="networkHealth">100%</div>
+                <div class="stat-change">All systems operational</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Transaction Fee</div>
+                <div class="stat-value" id="transactionFee">$0.00</div>
+                <div class="stat-change">Forever free</div>
+            </div>
+        </div>
+
+        <!-- Latest Blocks -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Latest Blocks</h2>
+                <div class="section-actions">
+                    <button class="btn" onclick="viewAllBlocks()">View All</button>
+                    <button class="btn" onclick="exportBlocks()">Export</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Block Height</th>
+                            <th>Block Hash</th>
+                            <th>Transactions</th>
+                            <th>Proposer</th>
+                            <th>Time</th>
+                            <th>Size</th>
+                        </tr>
+                    </thead>
+                    <tbody id="blocksTableBody">
+                        <!-- Dynamic content will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Latest Transactions -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Latest Transactions</h2>
+                <div class="section-actions">
+                    <button class="btn" onclick="viewAllTransactions()">View All</button>
+                    <button class="btn" onclick="exportTransactions()">Export</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Transaction Hash</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Amount</th>
+                            <th>Fee</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTableBody">
+                        <!-- Dynamic content will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Network Performance Charts -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Network Performance</h2>
+                <div class="section-actions">
+                    <button class="btn">24H</button>
+                    <button class="btn">7D</button>
+                    <button class="btn">30D</button>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                <div class="chart-container">
+                    <h3 style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.875rem; font-weight: 600;">Transaction Throughput (TPS)</h3>
+                    <canvas id="tpsChart" width="400" height="200"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3 style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.875rem; font-weight: 600;">Block Time (ms)</h3>
+                    <canvas id="blockTimeChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div class="chart-container">
+                    <h3 style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.875rem; font-weight: 600;">Network Activity</h3>
+                    <canvas id="activityChart" width="400" height="200"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3 style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.875rem; font-weight: 600;">Validator Performance</h3>
+                    <canvas id="validatorChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <svg width="32" height="32" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="footerBlueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#4FC3F7;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#1565C0;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="footerOrangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FFB74D;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#F57C00;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Blue checkmark/arrow part -->
+                    <path d="M60 80 L90 110 L140 60 L160 40 L180 20 L160 40 L140 60 L90 110 L60 80 Z" fill="url(#footerBlueGradient)"/>
+                    
+                    <!-- Blue lines (fork-like) -->
+                    <rect x="45" y="65" width="8" height="25" fill="url(#footerBlueGradient)" transform="rotate(-15 49 77.5)"/>
+                    <rect x="55" y="70" width="6" height="20" fill="url(#footerBlueGradient)" transform="rotate(-10 58 80)"/>
+                    <rect x="65" y="75" width="4" height="15" fill="url(#footerBlueGradient)" transform="rotate(-5 67 82.5)"/>
+                    
+                    <!-- Orange/yellow K shape -->
+                    <path d="M80 120 L80 180 L95 180 L95 150 L120 180 L140 180 L110 145 L135 120 L115 120 L95 140 L95 120 Z" fill="url(#footerOrangeGradient)"/>
+                </svg>
+                <span class="lks-branding">LKS BROTHERS LLC</span>
+            </div>
+            <div class="footer-text">
+                © 2025 LKS Brothers LLC. All rights reserved. | LKS NETWORK Mainnet Explorer<br>
+                Zero transaction fees forever • 65,000+ TPS • Cross-chain ready
+            </div>
+        </div>
+    </div>
+
+    <!-- XRP Payment Modal -->
+    <div class="modal-overlay" id="paymentModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Send XRP Payment</h2>
+                <button class="close-btn" onclick="closePaymentModal()">×</button>
+            </div>
+            <div class="modal-content">
+                <div class="form-group">
+                    <label>Source Address</label>
+                    <input type="text" id="sourceAddress" placeholder="Enter source XRP address">
+                </div>
+                <div class="form-group">
+                    <label>Destination Address</label>
+                    <input type="text" id="destAddress" placeholder="Enter destination XRP address">
+                </div>
+                <div class="form-group">
+                    <label>Secret Key</label>
+                    <input type="password" id="secretKey" placeholder="Enter wallet secret key">
+                </div>
+                <div class="form-group">
+                    <label>Amount (XRP)</label>
+                    <input type="number" id="xrpAmount" value="10" min="0.000001" step="0.000001">
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closePaymentModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="sendXrpPayment()">Send Payment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulate live data updates
+        function updateStats() {
+            const blockHeight = document.getElementById('blockHeight');
+            const totalTx = document.getElementById('totalTx');
+            const currentTps = document.getElementById('currentTps');
+            
+            // Update block height (every 400ms)
+            setInterval(() => {
+                const current = parseInt(blockHeight.textContent.replace(/,/g, ''));
+                blockHeight.textContent = (current + 1).toLocaleString();
+            }, 400);
+            
+            // Update total transactions
+            setInterval(() => {
+                const current = parseInt(totalTx.textContent.replace(/,/g, ''));
+                totalTx.textContent = (current + Math.floor(Math.random() * 10) + 5).toLocaleString();
+            }, 1000);
+            
+            // Update TPS
+            setInterval(() => {
+                const newTps = Math.floor(Math.random() * 2000) + 2500;
+                currentTps.textContent = newTps.toLocaleString();
+            }, 2000);
+        }
+
+        // Chart drawing utility functions
+        function drawChart(canvasId, data, color, label) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, color + '80');
+            gradient.addColorStop(1, color + '20');
+
+            const chartWidth = canvas.width;
+            const chartHeight = canvas.height;
+            const padding = 30;
+            const dataWidth = chartWidth - padding * 2;
+            const dataHeight = chartHeight - padding * 2;
+            
+            const maxValue = Math.max(...data);
+            const minValue = Math.min(...data);
+            const valueRange = maxValue - minValue || 1;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, chartWidth, chartHeight);
+            
+            // Draw grid lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = padding + (i / 4) * dataHeight;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(chartWidth - padding, y);
+                ctx.stroke();
+            }
+            
+            // Draw area chart
+            ctx.fillStyle = gradient;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            ctx.moveTo(padding, chartHeight - padding - ((data[0] - minValue) / valueRange) * dataHeight);
+            
+            for (let i = 1; i < data.length; i++) {
+                const x = padding + (i / (data.length - 1)) * dataWidth;
+                const y = chartHeight - padding - ((data[i] - minValue) / valueRange) * dataHeight;
+                ctx.lineTo(x, y);
+            }
+            
+            ctx.lineTo(chartWidth - padding, chartHeight - padding);
+            ctx.lineTo(padding, chartHeight - padding);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw line
+            ctx.beginPath();
+            ctx.moveTo(padding, chartHeight - padding - ((data[0] - minValue) / valueRange) * dataHeight);
+            
+            for (let i = 1; i < data.length; i++) {
+                const x = padding + (i / (data.length - 1)) * dataWidth;
+                const y = chartHeight - padding - ((data[i] - minValue) / valueRange) * dataHeight;
+                ctx.lineTo(x, y);
+            }
+            
+            ctx.stroke();
+            
+            // Draw data points
+            ctx.fillStyle = color;
+            for (let i = 0; i < data.length; i++) {
+                const x = padding + (i / (data.length - 1)) * dataWidth;
+                const y = chartHeight - padding - ((data[i] - minValue) / valueRange) * dataHeight;
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+
+        // Generate sample data
+        function generateSampleData(points, min, max) {
+            const data = [];
+            for (let i = 0; i < points; i++) {
+                data.push(Math.floor(Math.random() * (max - min)) + min);
+            }
+            return data;
+        }
+
+        // Professional data management
+        let blocksData = [];
+        let transactionsData = [];
+        let currentBlockHeight = 2847392;
+        let totalTransactions = 847293847;
+        let currentTPS = 62847;
+
+        // Generate professional sample data
+        function generateBlocks(count = 10) {
+            const blocks = [];
+            const validators = ['lks1validator1staking7q8r', 'lks1validator2staking9k3t', 'lks1validator3staking2m7p'];
+            
+            for (let i = 0; i < count; i++) {
+                const height = currentBlockHeight - i;
+                const txCount = Math.floor(Math.random() * 1000) + 2000;
+                const size = (Math.random() * 0.5 + 0.8).toFixed(1);
+                const timeAgo = i === 0 ? 'Just now' : `${i * 0.4}s ago`;
+                
+                blocks.push({
+                    height: height,
+                    hash: generateHash(),
+                    transactions: txCount.toLocaleString(),
+                    proposer: validators[i % 3],
+                    time: timeAgo,
+                    size: `${size} MB`
+                });
+            }
+            return blocks;
+        }
+
+        function generateTransactions(count = 10) {
+            const transactions = [];
+            const addresses = [
+                'lks1sender4k2m...8x9y', 'lks1receiver8p9q...2a3b', 'lks1trader6n7o...5c6d',
+                'lks1exchange1r2s...9e0f', 'lks1staking7q8r...3g4h', 'lks1rewards3t4u...7i8j'
+            ];
+            
+            for (let i = 0; i < count; i++) {
+                const amount = (Math.random() * 10000 + 100).toFixed(2);
+                const from = addresses[Math.floor(Math.random() * addresses.length)];
+                const to = addresses[Math.floor(Math.random() * addresses.length)];
+                
+                transactions.push({
+                    hash: generateHash(),
+                    from: from,
+                    to: to,
+                    amount: `${amount} LKS`,
+                    fee: '$0.00',
+                    status: 'Confirmed'
+                });
+            }
+            return transactions;
+        }
+
+        function updateBlocksTable() {
+            const tbody = document.getElementById('blocksTableBody');
+            
+            // Show loading skeleton
+            showTableSkeleton('blocksTableBody', 6);
+            
+            setTimeout(() => {
+                const blocks = generateBlocks(10);
+                
+                tbody.innerHTML = blocks.map((block, index) => `
+                    <tr class="table-row-hover fade-in" style="animation-delay: ${index * 0.1}s">
+                        <td><a href="#" class="hash" onclick="viewBlock(${block.height})">${block.height.toLocaleString()}</a></td>
+                        <td><span class="hash">${block.hash.substring(0, 12)}...${block.hash.substring(58)}</span></td>
+                        <td>${block.transactions}</td>
+                        <td><span class="hash">${block.proposer.substring(0, 16)}...${block.proposer.substring(block.proposer.length - 4)}</span></td>
+                        <td><span class="status-indicator">
+                            <span class="status-dot"></span>
+                            ${block.time}
+                        </span></td>
+                        <td>${block.size}</td>
+                    </tr>
+                `).join('');
+            }, 500);
+        }
+
+        function updateTransactionsTable() {
+            const tbody = document.getElementById('transactionsTableBody');
+            
+            // Show loading skeleton
+            showTableSkeleton('transactionsTableBody', 6);
+            
+            setTimeout(() => {
+                const transactions = generateTransactions(10);
+                
+                tbody.innerHTML = transactions.map((tx, index) => `
+                    <tr class="table-row-hover fade-in" style="animation-delay: ${index * 0.1}s">
+                        <td><span class="hash" onclick="viewTransaction('${tx.hash}')" style="cursor: pointer;">${tx.hash.substring(0, 12)}...${tx.hash.substring(58)}</span></td>
+                        <td><span class="hash">${tx.from}</span></td>
+                        <td><span class="hash">${tx.to}</span></td>
+                        <td><span class="amount">${tx.amount} LKS</span></td>
+                        <td><span class="amount">${tx.fee}</span></td>
+                        <td><span class="status-indicator">
+                            <span class="status-dot"></span>
+                            <span class="status-badge">${tx.status}</span>
+                        </span></td>
+                    </tr>
+                `).join('');
+            }, 300);
+        }
+
+        function updateProfessionalStats() {
+            // Update live counters with realistic increments
+            currentBlockHeight += 1;
+            totalTransactions += Math.floor(Math.random() * 100) + 50;
+            currentTPS = Math.floor(Math.random() * 3000) + 60000;
+
+            document.getElementById('blockHeight').textContent = currentBlockHeight.toLocaleString();
+            document.getElementById('totalTx').textContent = totalTransactions.toLocaleString();
+            document.getElementById('currentTps').textContent = currentTPS.toLocaleString();
+            document.getElementById('activeValidators').textContent = '3';
+            document.getElementById('networkHealth').textContent = '100%';
+        }
+
+        // Professional loading utilities
+        function showLoadingOverlay(message = 'Loading...') {
+            const overlay = document.createElement('div');
+            overlay.className = 'loading-overlay';
+            overlay.innerHTML = `
+                <div style="text-align: center;">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">${message}</div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            return overlay;
+        }
+
+        function hideLoadingOverlay(overlay) {
+            if (overlay && overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+        }
+
+        function showTableSkeleton(tableBodyId, columns) {
+            const tbody = document.getElementById(tableBodyId);
+            const skeletonRows = Array(5).fill().map(() => `
+                <tr>
+                    ${Array(columns).fill().map(() => '<td><div class="skeleton skeleton-text"></div></td>').join('')}
+                </tr>
+            `).join('');
+            tbody.innerHTML = skeletonRows;
+        }
+
+        // Professional action handlers
+        function viewAllBlocks() {
+            if (currentUser) {
+                const overlay = showLoadingOverlay('Loading all blocks...');
+                setTimeout(() => {
+                    hideLoadingOverlay(overlay);
+                    showNotification('Displaying 1,000 latest blocks', 'success');
+                }, 1500);
+            } else {
+                showNotification('Please login to view all blocks', 'warning');
+                openLoginModal();
+            }
+        }
+
+        function exportBlocks() {
+            if (currentUser) {
+                const overlay = showLoadingOverlay('Preparing export...');
+                setTimeout(() => {
+                    hideLoadingOverlay(overlay);
+                    // Simulate CSV download
+                    const csvContent = 'Block Height,Hash,Transactions,Proposer,Time,Size\n';
+                    const blob = new Blob([csvContent], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `lks-blocks-${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    showNotification('Blocks exported to CSV successfully', 'success');
+                }, 2000);
+            } else {
+                showNotification('Please login to export data', 'warning');
+                openLoginModal();
+            }
+        }
+
+        function viewAllTransactions() {
+            if (currentUser) {
+                const overlay = showLoadingOverlay('Loading all transactions...');
+                setTimeout(() => {
+                    hideLoadingOverlay(overlay);
+                    showNotification('Displaying 1,000 latest transactions', 'success');
+                }, 1500);
+            } else {
+                showNotification('Please login to view all transactions', 'warning');
+                openLoginModal();
+            }
+        }
+
+        function exportTransactions() {
+            if (currentUser) {
+                const overlay = showLoadingOverlay('Preparing transaction export...');
+                setTimeout(() => {
+                    hideLoadingOverlay(overlay);
+                    // Simulate CSV download
+                    const csvContent = 'Transaction Hash,From,To,Amount,Fee,Status\n';
+                    const blob = new Blob([csvContent], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `lks-transactions-${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    showNotification('Transactions exported to CSV successfully', 'success');
+                }, 2000);
+            } else {
+                showNotification('Please login to export data', 'warning');
+                openLoginModal();
+            }
+        }
+
+        function viewBlock(height) {
+            const overlay = showLoadingOverlay(`Loading block #${height}...`);
+            setTimeout(() => {
+                hideLoadingOverlay(overlay);
+                showNotification(`Block #${height} details loaded`, 'success');
+                // In a real app, this would navigate to block details page
+            }, 1200);
+        }
+
+        function viewTransaction(hash) {
+            const overlay = showLoadingOverlay(`Loading transaction details...`);
+            setTimeout(() => {
+                hideLoadingOverlay(overlay);
+                showNotification('Transaction details loaded', 'success');
+                // In a real app, this would navigate to transaction details page
+            }, 1000);
+        }
+
+        // Enhanced search with professional loading
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                showNotification('Please enter a search term', 'warning');
+                return;
+            }
+
+            const overlay = showLoadingOverlay('Searching blockchain...');
+            setTimeout(() => {
+                hideLoadingOverlay(overlay);
+                showNotification(`Found results for "${query}"`, 'success');
+                // In a real app, this would show search results
+            }, 1500);
+        }
+
+        // Initialize charts
+        const tpsData = generateSampleData(30, 58000, 65000);
+        const blockTimeData = generateSampleData(30, 350, 450);
+        const activityData = generateSampleData(30, 1200, 2500);
+        const validatorData = generateSampleData(30, 85, 99);
+
+        drawChart('tpsChart', tpsData, '#4FC3F7', 'TPS');
+        drawChart('blockTimeChart', blockTimeData, '#FFB74D', 'Block Time');
+        drawChart('activityChart', activityData, '#81C784', 'Activity');
+        drawChart('validatorChart', validatorData, '#F06292', 'Validator Performance');
+
+        // Initialize professional data
+        updateBlocksTable();
+        updateTransactionsTable();
+        updateProfessionalStats();
+        
+        // Professional periodic updates with staggered timing
+        let updateCounter = 0;
+        
+        setInterval(() => {
+            updateCounter++;
+            updateProfessionalStats();
+            
+            // Stagger table updates to avoid simultaneous loading
+            if (updateCounter % 2 === 0) {
+                updateBlocksTable();
+            } else {
+                updateTransactionsTable();
+            }
+            
+            // Update charts with smooth transitions
+            const newTpsData = generateSampleData(30, 58000, 65000);
+            const newBlockTimeData = generateSampleData(30, 350, 450);
+            const newActivityData = generateSampleData(30, 1200, 2500);
+            const newValidatorData = generateSampleData(30, 85, 99);
+
+            drawChart('tpsChart', newTpsData, '#4FC3F7', 'TPS');
+            drawChart('blockTimeChart', newBlockTimeData, '#FFB74D', 'Block Time');
+            drawChart('activityChart', newActivityData, '#81C784', 'Activity');
+            drawChart('validatorChart', newValidatorData, '#F06292', 'Validator Performance');
+        }, 6000);
+
+        // Enhanced search functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        performSearch();
+                    }
+                });
+            }
+        });
+
+        // Professional error handling
+        window.addEventListener('error', function(e) {
+            console.error('Application error:', e.error);
+            showNotification('An unexpected error occurred. Please refresh the page.', 'error');
+        });
+
+        // Performance monitoring
+        if ('performance' in window) {
+            window.addEventListener('load', function() {
+                setTimeout(() => {
+                    const perfData = performance.getEntriesByType('navigation')[0];
+                    console.log('Page load time:', perfData.loadEventEnd - perfData.loadEventStart, 'ms');
+                }, 0);
+            });
+        }
+
+        console.log('🚀 LKS NETWORK Mainnet Explorer loaded successfully!');
+        console.log('💰 Zero transaction fees forever!');
+        console.log('⚡ 65,000+ TPS capability');
+        console.log('🔗 Cross-chain ready with Wormhole + CCIP');
+
+        // Authentication System
+        let currentUser = null;
+
+        function openLoginModal() {
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+
+        function showPaymentModal() {
+            document.getElementById('paymentModal').style.display = 'flex';
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+        }
+
+        async function sendXrpPayment() {
+            const sourceAddress = document.getElementById('sourceAddress').value;
+            const destAddress = document.getElementById('destAddress').value;
+            const secretKey = document.getElementById('secretKey').value;
+            const amount = document.getElementById('xrpAmount').value;
+
+            if (!sourceAddress || !destAddress || !secretKey) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+
+            try {
+                showNotification('Sending XRP payment...', 'info');
+                
+                const response = await fetch('http://localhost:3000/send-payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sourceAddress: sourceAddress,
+                        destAddress: destAddress,
+                        secret: secretKey,
+                        amount: amount
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showNotification('XRP payment sent successfully!', 'success');
+                    closePaymentModal();
+                    // Clear form
+                    document.getElementById('sourceAddress').value = '';
+                    document.getElementById('destAddress').value = '';
+                    document.getElementById('secretKey').value = '';
+                    document.getElementById('xrpAmount').value = '10';
+                } else {
+                    showNotification(`Payment failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showNotification(`Network error: ${error.message}`, 'error');
+            }
+        }
+
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Show/hide forms
+            if (tab === 'email') {
+                document.getElementById('emailLogin').style.display = 'block';
+                document.getElementById('walletLogin').style.display = 'none';
+            } else {
+                document.getElementById('emailLogin').style.display = 'none';
+                document.getElementById('walletLogin').style.display = 'block';
+            }
+        }
+
+        function fillDemoAccount(type) {
+            const accounts = {
+                admin: { email: 'admin@lksnetwork.io', password: 'admin123' },
+                validator: { email: 'validator@lksnetwork.io', password: 'validator123' },
+                user: { email: 'user@lksnetwork.io', password: 'user123' }
+            };
+
+            const account = accounts[type];
+            document.getElementById('emailInput').value = account.email;
+            document.getElementById('passwordInput').value = account.password;
+        }
+
+        function loginWithEmail() {
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+
+            // Demo login - simulate API call
+            const validAccounts = {
+                'admin@lksnetwork.io': { name: 'LKS Admin', role: 'Admin' },
+                'validator@lksnetwork.io': { name: 'Validator User', role: 'Validator' },
+                'user@lksnetwork.io': { name: 'Regular User', role: 'User' }
+            };
+
+            if (validAccounts[email]) {
+                currentUser = {
+                    email: email,
+                    name: validAccounts[email].name,
+                    role: validAccounts[email].role
+                };
+
+                // Update UI
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('userMenu').style.display = 'flex';
+                document.getElementById('userName').textContent = currentUser.name;
+
+                closeLoginModal();
+                
+                // Show success message
+                showNotification(`Welcome back, ${currentUser.name}!`, 'success');
+            } else {
+                showNotification('Invalid email or password', 'error');
+            }
+        }
+
+        function connectWallet(walletType) {
+            // Simulate wallet connection
+            const wallets = {
+                metamask: 'MetaMask',
+                phantom: 'Phantom',
+                lks: 'LKS Wallet'
+            };
+
+            // Generate random wallet address
+            const address = 'lks1' + Math.random().toString(36).substring(2, 15);
+            
+            currentUser = {
+                address: address,
+                name: `${wallets[walletType]} User`,
+                role: 'User',
+                walletType: walletType
+            };
+
+            // Update UI
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('userMenu').style.display = 'flex';
+            document.getElementById('userName').textContent = currentUser.name;
+
+            closeLoginModal();
+            
+            showNotification(`Connected to ${wallets[walletType]}! Address: ${address.substring(0, 10)}...`, 'success');
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginBtn').style.display = 'block';
+            document.getElementById('userMenu').style.display = 'none';
+            showNotification('Logged out successfully', 'info');
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            `;
+
+            // Set background color based on type
+            const colors = {
+                success: '#4ade80',
+                error: '#ef4444',
+                info: '#3b82f6',
+                warning: '#f59e0b'
+            };
+            notification.style.background = colors[type] || colors.info;
+            notification.textContent = message;
+
+            // Add animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+
+            document.body.appendChild(notification);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+                style.remove();
+            }, 3000);
+        }
+
+        // Enhanced search functionality
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+
+            showNotification(`Searching for: ${query}`, 'info');
+            
+            // Simulate search results
+            setTimeout(() => {
+                if (query.match(/^\d+$/)) {
+                    showNotification(`Found block #${query}`, 'success');
+                } else if (query.startsWith('0x')) {
+                    showNotification(`Found transaction ${query.substring(0, 10)}...`, 'success');
+                } else if (query.startsWith('lks1')) {
+                    showNotification(`Found address ${query.substring(0, 10)}...`, 'success');
+                } else {
+                    showNotification(`Found ${Math.floor(Math.random() * 10) + 1} results for "${query}"`, 'success');
+                }
+            }, 500);
+        }
+
+        // Add enter key support for search
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('loginModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLoginModal();
+            }
+        });
+    </script>
+</body>
+</html>
